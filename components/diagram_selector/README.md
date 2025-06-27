@@ -10,7 +10,7 @@ This component analyzes meeting transcripts and determines the most appropriate 
 
 ## Architecture
 
-```
+```text
 Input: Meeting Transcript (text)
 ↓
 Granite 3.3 8B Instruct Analysis
