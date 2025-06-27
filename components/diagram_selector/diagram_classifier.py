@@ -1,212 +1,99 @@
 """
-Diagram Classifier Component
+Simple Diagram Classifier
 Developer: Hatem Soliman
-Purpose: Analyze meeting transcripts and determine appropriate diagram types
+Purpose: Analyze meeting transcripts and determine diagram types
 """
 
-import json
-from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass
-
-@dataclass
-class DiagramRecommendation:
-  """Represents a diagram recommendation with confidence and reasoning."""
-  diagram_type: str
-  confidence: float
-  reasoning: str
-  keywords: List[str]
-
-class DiagramClassifier:
+def analyze_meeting(transcript, api_key, project_id, endpoint_url):
   """
-  Classifies meeting content to determine the most appropriate diagram type.
-  Can work with mock data for independent testing.
-  """
+  Simple function to analyze meeting transcript and suggest diagram type.
   
-  def __init__(self):
-    self.diagram_types = {
-      "UML Class Diagram": {
-        "keywords": ["class", "object", "inheritance", "encapsulation", "polymorphism", 
-                   "attributes", "methods", "relationships", "entities"],
-        "confidence_threshold": 0.7
-      },
-      "UML Sequence Diagram": {
-        "keywords": ["sequence", "interaction", "message", "lifeline", "activation", 
-                   "flow", "process", "step by step", "timeline"],
-        "confidence_threshold": 0.7
-      },
-      "Flowchart": {
-        "keywords": ["process", "decision", "flow", "workflow", "business process", 
-                   "steps", "if else", "condition", "branch"],
-        "confidence_threshold": 0.6
-      },
-      "Component Diagram": {
-        "keywords": ["component", "system", "architecture", "module", "service", 
-                   "interface", "deployment", "infrastructure"],
-        "confidence_threshold": 0.7
-      },
-      "Use Case Diagram": {
-        "keywords": ["user", "actor", "use case", "requirement", "functionality", 
-                   "interaction", "goal", "scenario"],
-        "confidence_threshold": 0.6
-      },
-      "Activity Diagram": {
-        "keywords": ["activity", "workflow", "action", "state", "transition", 
-                   "parallel", "concurrent", "business process"],
-        "confidence_threshold": 0.6
-      }
+  Args:
+    transcript: Text from meeting
+    
+  Returns:
+    Dictionary with diagram type and reasoning
+  """
+  """
+  # Convert to lowercase for easier matching
+  text = transcript.lower()
+  
+  # Simple keyword matching
+  if "class" in text or "object" in text or "inheritance" in text:
+    return {
+      "diagram_type": "UML Class Diagram",
+      "reasoning": "Meeting discusses classes and objects"
     }
   
-  def analyze_content(self, meeting_transcript: str) -> DiagramRecommendation:
-    """
-    Analyze meeting transcript and return diagram recommendation.
-    
-    Args:
-      meeting_transcript: Text content from meeting
-      
-    Returns:
-      DiagramRecommendation with type, confidence, and reasoning
-    """
-    # Convert to lowercase for keyword matching
-    content_lower = meeting_transcript.lower()
-    
-    # Calculate scores for each diagram type
-    scores = {}
-    matched_keywords = {}
-    
-    for diagram_type, config in self.diagram_types.items():
-      score = 0
-      matched = []
-      
-      for keyword in config["keywords"]:
-        if keyword in content_lower:
-          score += 1
-          matched.append(keyword)
-      
-      # Normalize score by number of keywords
-      normalized_score = score / len(config["keywords"])
-      scores[diagram_type] = normalized_score
-      matched_keywords[diagram_type] = matched
-    
-    # Find the best match
-    if not scores or max(scores.values()) == 0:
-      # No matches found, return default with low confidence
-      return DiagramRecommendation(
-        diagram_type="Flowchart",  # Default fallback
-        confidence=0.0,
-        reasoning="No clear diagram type identified. Consider manual review.",
-        keywords=[]
-      )
-    
-    best_diagram = max(scores.items(), key=lambda x: x[1])
-    diagram_type, confidence = best_diagram
-    
-    # Generate reasoning
-    reasoning = self._generate_reasoning(
-      diagram_type, 
-      confidence, 
-      matched_keywords[diagram_type],
-      meeting_transcript
-    )
-    
-    return DiagramRecommendation(
-      diagram_type=diagram_type,
-      confidence=confidence,
-      reasoning=reasoning,
-      keywords=matched_keywords[diagram_type]
-    )
-  
-  def _generate_reasoning(self, diagram_type: str, confidence: float, 
-                        keywords: List[str], transcript: str) -> str:
-    """Generate human-readable reasoning for the recommendation."""
-    
-    if confidence < 0.3:
-      return f"Low confidence in {diagram_type}. Consider manual review."
-    
-    keyword_phrase = ", ".join(keywords[:3])  # Show top 3 keywords
-    
-    reasoning_templates = {
-      "UML Class Diagram": f"Meeting discusses object-oriented concepts with keywords: {keyword_phrase}. {diagram_type} best represents class relationships and structure.",
-      "UML Sequence Diagram": f"Meeting focuses on process flows and interactions with keywords: {keyword_phrase}. {diagram_type} shows message exchanges and timing.",
-      "Flowchart": f"Meeting describes business processes and decision points with keywords: {keyword_phrase}. {diagram_type} visualizes the workflow steps.",
-      "Component Diagram": f"Meeting covers system architecture and components with keywords: {keyword_phrase}. {diagram_type} shows system structure and interfaces.",
-      "Use Case Diagram": f"Meeting discusses user requirements and interactions with keywords: {keyword_phrase}. {diagram_type} captures user goals and system functionality.",
-      "Activity Diagram": f"Meeting describes workflows and activities with keywords: {keyword_phrase}. {diagram_type} shows process flow and parallel activities."
+  elif "sequence" in text or "flow" in text or "step" in text:
+    return {
+      "diagram_type": "UML Sequence Diagram", 
+      "reasoning": "Meeting discusses process flow and steps"
     }
-    
-    return reasoning_templates.get(diagram_type, f"Recommended {diagram_type} based on content analysis.")
   
-  def get_multiple_recommendations(self, meeting_transcript: str, 
-                                 top_k: int = 3) -> List[DiagramRecommendation]:
-    """
-    Get top-k diagram recommendations for more flexibility.
-    
-    Args:
-      meeting_transcript: Text content from meeting
-      top_k: Number of top recommendations to return
-      
-    Returns:
-      List of DiagramRecommendation objects sorted by confidence
-    """
-    content_lower = meeting_transcript.lower()
-    recommendations = []
-    
-    for diagram_type, config in self.diagram_types.items():
-      score = 0
-      matched = []
-      
-      for keyword in config["keywords"]:
-        if keyword in content_lower:
-          score += 1
-          matched.append(keyword)
-      
-      normalized_score = score / len(config["keywords"])
-      
-      if normalized_score > 0.1:  # Only include if some relevance
-        reasoning = self._generate_reasoning(
-          diagram_type, normalized_score, matched, meeting_transcript
-        )
-        
-        recommendations.append(DiagramRecommendation(
-          diagram_type=diagram_type,
-          confidence=normalized_score,
-          reasoning=reasoning,
-          keywords=matched
-        ))
-    
-    # Sort by confidence and return top-k
-    recommendations.sort(key=lambda x: x.confidence, reverse=True)
-    return recommendations[:top_k]
-
-# Mock function for independent testing
-def mock_granite_analysis(transcript: str) -> str:
-  """
-  Mock function to simulate Granite 3.3 8B Instruct analysis.
-  Replace this with actual API call when integrating with watsonx.ai.
-  """
-  classifier = DiagramClassifier()
-  recommendation = classifier.analyze_content(transcript)
+  elif "process" in text or "workflow" in text or "decision" in text:
+    return {
+      "diagram_type": "Flowchart",
+      "reasoning": "Meeting discusses business processes"
+    }
   
-  return json.dumps({
-    "diagram_type": recommendation.diagram_type,
-    "confidence": recommendation.confidence,
-    "reasoning": recommendation.reasoning,
-    "keywords": recommendation.keywords
-  }, indent=2)
+  elif "component" in text or "system" in text or "architecture" in text:
+    return {
+      "diagram_type": "Component Diagram",
+      "reasoning": "Meeting discusses system components"
+    }
+  
+  elif "user" in text or "actor" in text or "requirement" in text:
+    return {
+      "diagram_type": "Use Case Diagram",
+      "reasoning": "Meeting discusses user requirements"
+    }
+  
+  else:
+    return {
+      "diagram_type": "Flowchart",
+      "reasoning": "Default choice - general process"
+    }
+  """
 
+  # Get IAM token
+  token_resp = requests.post(
+    "https://iam.cloud.ibm.com/identity/token",
+    data={
+      "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
+      "apikey": api_key
+    }
+  )
+  access_token = token_resp.json()["access_token"]
+
+  # Prepare prompt
+  prompt = f"""
+  Analyze this meeting transcript and determine the most appropriate diagram type:
+
+  \"{transcript}\"
+
+  Choose from: UML Class Diagram, UML Sequence Diagram, Flowchart, Component Diagram, Use Case Diagram, Activity Diagram
+
+  Provide your response in this exact JSON format:
+  {{
+    "diagram_type": "chosen_diagram_type",
+    "confidence": 0.85,
+    "reasoning": "explanation of why this diagram fits",
+    "keywords": ["keyword1", "keyword2", "keyword3"]
+  }}
+  """
+
+# Example usage
 if __name__ == "__main__":
-  # Example usage for independent testing
-  sample_transcript = """
-  We discussed the user authentication flow. When a user logs in, 
-  the system first validates their credentials, then checks their permissions, 
-  and finally grants access to the appropriate modules. We need to handle 
-  different user roles and their specific access rights.
-  """
-  
-  print("Testing Diagram Classifier:")
-  print("=" * 50)
-  print(f"Input: {sample_transcript[:100]}...")
-  print()
-  
-  result = mock_granite_analysis(sample_transcript)
-  print("Output:")
-  print(result) 
+  # Test with a sample transcript
+  # sample = "We discussed the User class with attributes and methods"
+  # result = analyze_meeting(sample)
+  # print(f"Input: {sample}")
+  # print(f"Result: {result['diagram_type']} - {result['reasoning']}")
+  transcript = "We discussed the user authentication flow and the steps for login and permission checking."
+  api_key = "YOUR_API_KEY"
+  project_id = "YOUR_PROJECT_ID"
+  endpoint_url = "https://us-south.ml.cloud.ibm.com"
+
+  result = analyze_meeting(transcript, api_key, project_id, endpoint_url)
+  print(result)
