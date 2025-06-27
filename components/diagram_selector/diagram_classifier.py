@@ -72,7 +72,7 @@ def analyze_meeting(transcript, api_key, project_id, endpoint_url):
 
   \"{transcript}\"
 
-  Choose from: UML Class Diagram, UML Sequence Diagram, Flowchart, Component Diagram, Use Case Diagram, Activity Diagram
+  Choose from the supported UML diagrams: Sequence diagram, Usecase diagram, Class diagram, Object diagram, Activity diagram, Component diagram, Deployment diagram, State diagram, Timing diagram, ER diagram
 
   Provide your response in this exact JSON format:
   {{
@@ -93,7 +93,7 @@ if __name__ == "__main__":
   transcript = "We discussed the user authentication flow and the steps for login and permission checking."
   api_key = "YOUR_API_KEY"
   project_id = "YOUR_PROJECT_ID"
-  endpoint_url = "https://us-south.ml.cloud.ibm.com"
+  endpoint_url = "https://eu-de.ml.cloud.ibm.com"
 
   result = analyze_meeting(transcript, api_key, project_id, endpoint_url)
   print(result)
