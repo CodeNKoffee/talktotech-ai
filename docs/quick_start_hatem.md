@@ -77,10 +77,13 @@ import json
 with open('data/sample_meetings/sample_transcripts.json', 'r') as f:
     samples = json.load(f)['sample_meetings']
 
-# Test each sample
+# Test each sample - AI determines the diagram type
 for meeting in samples:
     result = classifier.analyze_content(meeting['transcript'])
     print(f"{meeting['title']}: {result.diagram_type} (confidence: {result.confidence:.2f})")
+    print(f"  Reasoning: {result.reasoning}")
+    print(f"  Keywords: {result.keywords}")
+    print()
 ```
 
 ## 🔄 Development Workflow
@@ -92,14 +95,12 @@ for meeting in samples:
 - ✅ Experiment with Prompt Lab
 
 ### Day 2: Enhancement
-
 - 🔄 Improve classification logic
 - 🔄 Add more diagram types if needed
 - 🔄 Test with more sample data
 - 🔄 Document your findings
 
 ### Day 3: Integration Preparation
-
 - 🔄 Create API integration layer
 - 🔄 Coordinate with team members
 - 🔄 Prepare for component integration
@@ -107,7 +108,6 @@ for meeting in samples:
 ## 💡 Tips for Success
 
 ### Resource Management
-
 - **Use Prompt Lab extensively** - it's included in your $100 credits
 - **Cache results** - avoid redundant API calls
 - **Monitor credit usage** - you'll get alerts at 25%, 50%, 80%
@@ -118,7 +118,6 @@ for meeting in samples:
 - **Document your decisions** - helps team understand your approach
 
 ### Team Coordination
-
 - **Commit regularly** - track your progress
 - **Share sample outputs** - helps team understand your component
 - **Coordinate interfaces** - ensure your output matches team expectations
@@ -126,7 +125,6 @@ for meeting in samples:
 ## 🎯 Expected Output Format
 
 Your component should return:
-
 ```json
 {
   "diagram_type": "UML Sequence Diagram",
@@ -136,17 +134,34 @@ Your component should return:
 }
 ```
 
+## 🧠 AI-Driven Classification
+
+### How It Works
+1. **Input**: Meeting transcript (text)
+2. **AI Analysis**: Your component analyzes the content using keyword matching and reasoning
+3. **Output**: Recommended diagram type with confidence and reasoning
+
+### What the AI Determines
+- **Diagram Type**: Based on content analysis, not human assumptions
+- **Confidence**: How certain the AI is about the recommendation
+- **Reasoning**: Why this diagram type fits the content
+- **Keywords**: Key terms that influenced the decision
+
+### Testing Philosophy
+- **No "correct" answers**: The AI's analysis is what matters
+- **Focus on logic**: Test that the AI's reasoning makes sense
+- **Validate output format**: Ensure consistent JSON structure
+- **Test edge cases**: Handle low-confidence scenarios gracefully
+
 ## 🆘 Troubleshooting
 
 ### Common Issues
-
 1. **Import errors**: Make sure you're in the right directory
-2. **Test failures**: Check that sample data matches expected outputs
+2. **Test failures**: Check that your logic handles all scenarios
 3. **API access issues**: Verify IBM Cloud account setup
 4. **Credit exhaustion**: Monitor usage and optimize API calls
 
 ### Getting Help
-
 - Check the main README.md for project overview
 - Review team member READMEs for integration points
 - Use the sample data for testing edge cases
@@ -154,8 +169,12 @@ Your component should return:
 ## 📊 Success Metrics
 
 Track these metrics:
-
-- **Accuracy**: How often your recommendations match expected diagrams
+- **Consistency**: Similar inputs should produce similar outputs
 - **Confidence**: Average confidence scores for recommendations
 - **Coverage**: How many different diagram types you can identify
 - **Performance**: Response time and resource usage
+- **Reasoning Quality**: How well the AI explains its decisions
+
+---
+
+**Remember**: You can develop and test your component completely independently. Focus on making it robust and well-tested before worrying about integration!
