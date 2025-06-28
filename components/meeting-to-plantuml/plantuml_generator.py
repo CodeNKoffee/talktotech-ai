@@ -29,7 +29,7 @@ class GranitePlantUMLGenerator:
             input={"prompt": prompt}
         )
         return ''.join(output)
-
+    
     def generate_plantuml(self, transcript, diagram_type, keywords=None, summary=""):
         """
         Generate PlantUML syntax using enhanced error handling and processing.
