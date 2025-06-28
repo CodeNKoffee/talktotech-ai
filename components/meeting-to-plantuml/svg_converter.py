@@ -9,12 +9,25 @@ import tempfile
 import subprocess
 
 class SVGConverter:
-    def __init__(self, plantuml_jar_path: str = "./lib/plantuml-1.2025.3.jar", output_dir: str = "./output"):
+    def __init__(self, plantuml_jar_path: str = None, output_dir: str = "./output"):
         """Initialize the SVGConverter with PlantUML JAR path and output directory."""
+
+        abs_path = os.path.abspath("../lib/plantuml-1.2025.3.jar")
+        if os.path.exists(abs_path):
+            plantuml_jar_path = abs_path
+            
+        if plantuml_jar_path is None:
+            plantuml_jar_path = os.path.join(os.path.dirname(__file__), "..", "lib", "plantuml-1.2025.3.jar")
+    
         self.plantuml_jar_path = plantuml_jar_path
         self.output_dir = output_dir
         self.jvm_started = False
         self.jar_available = self._check_jar_availability()
+        
+        # Try to download JAR if not available
+        if not self.jar_available:
+            print("PlantUML JAR not found, attempting to download...")
+            self.jar_available = self._download_plantuml_jar()
         
         # Only start JVM if JAR is available
         if self.jar_available:
@@ -55,12 +68,14 @@ class SVGConverter:
         """Start the JVM with PlantUML classpath."""
         if not self.jvm_started and self.jar_available:
             try:
+                print(f"Starting JVM with PlantUML JAR: {self.plantuml_jar_path}")
                 jpype.startJVM(
                     classpath=[self.plantuml_jar_path],
                     jvmpath=jpype.getDefaultJVMPath(),
                     convertStrings=True
                 )
                 self.jvm_started = True
+                print("JVM started successfully")
             except Exception as e:
                 print(f"Warning: Failed to start JVM: {str(e)}")
                 self.jvm_started = False
@@ -94,6 +109,16 @@ class SVGConverter:
         if result["success"]:
             return result
 
+        # Method 2: Try command-line Java with JAR
+        result = self._convert_with_java_command(plantuml_code, output_file)
+        if result["success"]:
+            return result
+
+        # Method 3: Try online PlantUML server as last resort
+        result = self._convert_with_online_server(plantuml_code, output_file)
+        if result["success"]:
+            return result
+
         return {
             "success": False,
             "output_file": "",
@@ -111,13 +136,85 @@ class SVGConverter:
             from java.io import FileOutputStream
             
             reader = SourceStringReader(plantuml_code)
-            with open(output_file, "wb") as f:
-                output_stream = FileOutputStream(output_file)
-                reader.outputImage(output_stream, FileFormatOption(FileFormat.SVG))
-                output_stream.close()
+            output_stream = FileOutputStream(output_file)
+            reader.outputImage(output_stream, FileFormatOption(FileFormat.SVG))
+            output_stream.close()
             
-            with open(output_file, "r", encoding="utf-8") as f:
-                svg_content = f.read()
+            # Verify the file was created and read its content
+            if os.path.exists(output_file):
+                with open(output_file, "r", encoding="utf-8") as f:
+                    svg_content = f.read()
+                    
+                return {
+                    "success": True,
+                    "output_file": output_file,
+                    "svg_content": svg_content,
+                    "errors": []
+                }
+            else:
+                return {"success": False, "errors": ["SVG file was not created"]}
+                
+        except Exception as e:
+            return {"success": False, "errors": [f"JPype conversion failed: {str(e)}"]}
+
+    def _convert_with_java_command(self, plantuml_code: str, output_file: str) -> dict:
+        """Convert using Java command line with PlantUML JAR."""
+        if not self.jar_available:
+            return {"success": False, "errors": ["PlantUML JAR not available"]}
+
+        try:
+            # Create temporary file for PlantUML input
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.puml', delete=False) as temp_file:
+                temp_file.write(plantuml_code)
+                temp_input = temp_file.name
+
+            # Run Java command to generate SVG
+            cmd = [
+                'java', '-jar', self.plantuml_jar_path,
+                '-tsvg', '-o', self.output_dir, temp_input
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            # Clean up temporary file
+            os.unlink(temp_input)
+            
+            if result.returncode == 0 and os.path.exists(output_file):
+                with open(output_file, "r", encoding="utf-8") as f:
+                    svg_content = f.read()
+                    
+                return {
+                    "success": True,
+                    "output_file": output_file,
+                    "svg_content": svg_content,
+                    "errors": []
+                }
+            else:
+                return {"success": False, "errors": [f"Java command failed: {result.stderr}"]}
+                
+        except Exception as e:
+            return {"success": False, "errors": [f"Java command conversion failed: {str(e)}"]}
+
+    def _convert_with_online_server(self, plantuml_code: str, output_file: str) -> dict:
+        """Convert using PlantUML online server as last resort."""
+        try:
+            import base64
+            import zlib
+            
+            # Encode PlantUML code for URL
+            compressed = zlib.compress(plantuml_code.encode('utf-8'))
+            encoded = base64.b64encode(compressed).decode('ascii')
+            
+            # Use PlantUML online server
+            url = f"http://www.plantuml.com/plantuml/svg/{encoded}"
+            
+            print(f"Attempting to use online PlantUML server...")
+            response = urllib.request.urlopen(url, timeout=10)
+            svg_content = response.read().decode('utf-8')
+            
+            # Save to file
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write(svg_content)
                 
             return {
                 "success": True,
@@ -125,50 +222,11 @@ class SVGConverter:
                 "svg_content": svg_content,
                 "errors": []
             }
+            
         except Exception as e:
-            return {"success": False, "errors": [f"JPype conversion failed: {str(e)}"]}
+            return {"success": False, "errors": [f"Online server conversion failed: {str(e)}"]}
 
     def __del__(self):
         """Shutdown JVM when the object is destroyed."""
         if self.jvm_started and jpype.isJVMStarted():
             jpype.shutdownJVM()
-
-if __name__ == "__main__":
-    # Sample PlantUML code
-    plantuml_code = """
-    @startuml
-    skinparam monochrome true
-    skinparam shadowing false
-    skinparam style strictuml
-
-    participant User
-    participant System
-
-    User -> System : request
-    activate System
-    System --> User : response
-    deactivate System
-
-    note right of System : Interaction
-    @enduml
-    """
-
-    # Create converter instance and convert
-    print("Initializing SVG Converter...")
-    converter = SVGConverter()
-    
-    print("Converting PlantUML to SVG...")
-    result = converter.convert_to_svg(plantuml_code)
-
-    # Output result
-    print(f"\nConversion Status: {'Success' if result['success'] else 'Failed'}")
-    
-    if result['success']:
-        print(f"Output file: {result['output_file']}")
-        print(f"SVG content length: {len(result['svg_content'])} characters")
-        print("First 200 characters of SVG:")
-        print(result['svg_content'][:200] + "..." if len(result['svg_content']) > 200 else result['svg_content'])
-    else:
-        print("Errors encountered:")
-        for error in result['errors']:
-            print(f"  - {error}")

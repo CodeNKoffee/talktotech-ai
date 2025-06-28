@@ -40,31 +40,50 @@ class PlantUMLErrorHandler:
                    "No AI function provided - using fallback", False
         
         try:
+            print("[DEBUG] Starting AI-based PlantUML generation process...")
+
             # Generate initial code
+            print("[DEBUG] Calling ai_generate_func with initial prompt...")
             raw_output = ai_generate_func(initial_prompt)
+            print(f"[DEBUG] Raw output from AI:\n{raw_output[:300]}")  # Truncate for readability
+
+            print("[DEBUG] Cleaning AI output...")
             cleaned_code = self.processor.clean_plantuml_output(raw_output)
-            
+            print(f"[DEBUG] Cleaned PlantUML code:\n{cleaned_code[:300]}")
+
             # Validate the code
+            print("[DEBUG] Validating cleaned PlantUML code...")
             is_valid, errors = self.processor.validate_plantuml(cleaned_code, diagram_type)
-            
+            print(f"[DEBUG] Validation result: {is_valid}, Errors: {errors}")
+
             if is_valid:
+                print("[DEBUG] Code is valid. Returning success.")
                 return cleaned_code, "Successfully generated valid PlantUML", True
-            
+
             # Step 2: Attempt error fixing
+            print("[DEBUG] Attempting to fix errors in the PlantUML code...")
             fixed_code, fix_success = self._attempt_error_fixing(
                 cleaned_code, errors, diagram_type, transcript, summary, keywords, ai_generate_func
             )
-            
+            print(f"[DEBUG] Fix attempt result: {fix_success}")
+            print(f"[DEBUG] Fixed code:\n{fixed_code[:300]}")
+
             if fix_success:
+                print("[DEBUG] Fix successful. Returning fixed code.")
                 return fixed_code, f"Fixed {len(errors)} errors successfully", True
-            
+
             # Step 3: Fallback to template
+            print("[DEBUG] Falling back to template diagram...")
             fallback_code = self.processor.get_fallback_diagram(diagram_type, transcript[:100])
+            print(f"[DEBUG] Fallback code:\n{fallback_code[:300]}")
             return fallback_code, f"Used fallback after {len(errors)} errors: {'; '.join(errors[:3])}", False
-            
+
         except Exception as e:
+            print(f"[ERROR] Exception occurred during diagram generation: {str(e)}")
             fallback_code = self.processor.get_fallback_diagram(diagram_type, transcript[:100])
+            print(f"[DEBUG] Returning fallback due to exception...")
             return fallback_code, f"Exception occurred: {str(e)[:100]}", False
+
     
     def _attempt_error_fixing(self, problematic_code: str, errors: List[str], 
                             diagram_type: str, transcript: str, summary: str, 

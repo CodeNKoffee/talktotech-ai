@@ -7,6 +7,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'diagram-to-code'))
 from plantuml_generator import GranitePlantUMLGenerator
 from meeting_data import SAMPLE_MEETINGS, get_meeting_by_id, get_meetings_by_diagram_type, get_all_diagram_types
+from svg_converter import SVGConverter
 
 # Import GraniteCodeGenerator from the diagram-to-code module
 import importlib.util
@@ -32,8 +33,41 @@ def maybe_generate_real_code(generator, meeting, result):
         if code_result["success"]:
             print(f"\n===== GENERATED {code_result['language'].upper()} CODE =====\n")
             print(code_result["code"])
+            print("✅ Code generation complete.\n")
         else:
             print(f"⚠️ Failed to generate real code: {code_result.get('error', 'Unknown error')}")
+
+
+def generate_svg_diagram(plantuml_code, meeting_title="diagram"):
+    """
+    Generate SVG diagram from PlantUML code using the SVGConverter.
+    """
+    print(f"\n📊 Generating SVG diagram for: {meeting_title}")
+    
+    # Initialize SVG converter
+    svg_converter = SVGConverter()
+    
+    # Convert PlantUML to SVG
+    svg_result = svg_converter.convert_to_svg(plantuml_code)
+    
+    if svg_result["success"]:
+        print(f"✅ SVG generated successfully!")
+        print(f"📁 Output file: {svg_result['output_file']}")
+        print(f"📏 SVG content length: {len(svg_result['svg_content'])} characters")
+        
+        # Show a preview of the SVG content
+        preview_length = min(200, len(svg_result['svg_content']))
+        print(f"🔍 SVG Preview (first {preview_length} characters):")
+        print(svg_result['svg_content'][:preview_length])
+        if len(svg_result['svg_content']) > preview_length:
+            print("...")
+    else:
+        print(f"❌ SVG generation failed!")
+        print("Errors encountered:")
+        for error in svg_result['errors']:
+            print(f"  - {error}")
+    
+    return svg_result
 
 
 def format_enhanced_output(meeting, result):
@@ -69,8 +103,12 @@ def test_diagram_type(generator, diagram_type):
     for meeting in meetings:
         result = generator.generate_from_meeting(meeting)
         print(format_enhanced_output(meeting, result))
+        
+        # Generate SVG diagram from the PlantUML code
+        if result['success'] and result['plantuml_code']:
+            generate_svg_diagram(result['plantuml_code'], meeting['title'])
+        
         maybe_generate_real_code(generator, meeting, result)
-        print("✅ Code generation complete.\n")
 
 def main():
     """Simplified test runner with two core options"""
@@ -96,8 +134,12 @@ def main():
             print(f"\n🔸 Processing: {meeting['title']}")
             result = generator.generate_from_meeting(meeting)
             print(format_enhanced_output(meeting, result))
+            
+            # Generate SVG diagram from the PlantUML code
+            if result['success'] and result['plantuml_code']:
+                generate_svg_diagram(result['plantuml_code'], meeting['title'])
+            
             maybe_generate_real_code(generator, meeting, result)
-            print("✅ Code generation complete.\n")
         else:
             print(f"❌ Meeting '{meeting_id}' not found!")
     
