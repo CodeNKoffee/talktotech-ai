@@ -5,7 +5,10 @@ Purpose: Analyze meeting transcripts and determine diagram types
 """
 
 import json
-import requests
+import replicate
+
+# Per user instruction, use the Replicate client with a hardcoded token.
+replicate_client = replicate.Client(api_token="r8_ZuNi8fo4buhXhahu9G0487TZ5ZXE3Tf3csKRW")
 
 # Simple in-memory counter that resets with the Python process (i.e. the
 # browser session described by the user).  The first call returns
@@ -19,34 +22,16 @@ def _next_meeting_id() -> str:
   _MEETING_COUNTER += 1
   return f"meeting_{_MEETING_COUNTER:03d}"
 
-def analyze_meeting(transcript, api_key, project_id, endpoint_url):
+def analyze_meeting(transcript: str) -> dict:
   """
-  Simple function to analyze meeting transcript and suggest diagram type.
+  Analyzes a meeting transcript to suggest a diagram type, title, and keywords using Replicate.
   
   Args:
-    transcript: Text from meeting
+    transcript: Text from the meeting.
     
   Returns:
-    Dictionary with diagram type and reasoning
+    A dictionary containing the full meeting object.
   """
-  # ------------------------------------------------------------------
-  # 1) Obtain an IBM access token (fixed header for form data)
-  # ------------------------------------------------------------------
-  token_resp = requests.post(
-    "https://iam.cloud.ibm.com/identity/token",
-    data={
-      "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
-      "apikey": api_key,
-    },
-    headers={"Content-Type": "application/x-www-form-urlencoded"},
-  )
-  token_resp.raise_for_status()
-  access_token = token_resp.json().get("access_token")
-
-  # ------------------------------------------------------------------
-  # 2) Craft the prompt so Granite 3.3-8b-instruct returns the fields we
-  #    need *except* the meeting ID and transcript (added in code below).
-  # ------------------------------------------------------------------
   prompt = f"""You are an expert at what diagrams are most suitable for a given meeting transcript.
 
 1. Read the following meeting transcript.
@@ -78,39 +63,30 @@ Return **only** a JSON object with this exact structure and no extra keys:
 
 Do not include an "id" or the full transcript – those will be added by the calling code."""
 
-  # ------------------------------------------------------------------
-  # 3) Call the Granite model endpoint. Only minimal request code is
-  #    included; adjust 'endpoint_url' and result parsing as needed.
-  # ------------------------------------------------------------------
-  completion_resp = requests.post(
-    endpoint_url,
-    json={
-      "model_id": "ibm-granite/granite-3.3-8b-instruct",
-      "input": [
-        {"role": "user", "content": prompt}
-      ],
-      "parameters": {
-        "max_tokens": 512,
-        "temperature": 0.2,
-        "top_p": 0.9,
-      },
-    },
-    headers={
-      "Authorization": f"Bearer {access_token}",
-      "Content-Type": "application/json",
-      "X-IBM-Project-Id": project_id,
+  # Call the Granite model via Replicate
+  output_iterator = replicate_client.run(
+    "ibm-granite/granite-3.3-8b-instruct",
+    input={
+      "prompt": prompt,
+      "temperature": 0.3,
+      "max_tokens": 400,
+      "top_p": 0.9,
     },
   )
-  completion_resp.raise_for_status()
+  
+  generated_text = "".join(output_iterator).strip()
 
-  # The Granite endpoint returns a list of results; adjust if your schema
-  # differs. We expect the generated text to be the JSON we asked for.
-  generated_text = completion_resp.json()["results"][0]["generated_text"]
-  ai_data = json.loads(generated_text)
+  # Clean potential markdown fences from the model's output
+  if generated_text.startswith("```json"):
+    generated_text = generated_text[7:-3].strip()
+  
+  try:
+    ai_data = json.loads(generated_text)
+  except json.JSONDecodeError:
+    print(f"Warning: Model returned non-JSON output: {generated_text}")
+    ai_data = {}
 
-  # ------------------------------------------------------------------
-  # 4) Assemble the final meeting object that matches SAMPLE_MEETINGS.
-  # ------------------------------------------------------------------
+  # Assemble the final meeting object
   meeting_obj = {
     "id": _next_meeting_id(),
     "title": ai_data.get("title", "Untitled Meeting"),
