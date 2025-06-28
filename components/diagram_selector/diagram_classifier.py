@@ -4,11 +4,6 @@ Developer: Hatem Soliman
 Purpose: Analyze meeting transcripts and determine diagram types
 """
 
-# -*- coding: utf-8 -*-
-# Updated to generate meeting objects that match SAMPLE_MEETINGS schema
-# and to fix IAM token retrieval. No heavy logic is added – only prompt
-# changes and a tiny helper to auto-increment meeting IDs per session.
-
 import json
 import requests
 
@@ -52,7 +47,7 @@ def analyze_meeting(transcript, api_key, project_id, endpoint_url):
   # 2) Craft the prompt so Granite 3.3-8b-instruct returns the fields we
   #    need *except* the meeting ID and transcript (added in code below).
   # ------------------------------------------------------------------
-  prompt = f"""You are an expert software architect.
+  prompt = f"""You are an expert at what diagrams are most suitable for a given meeting transcript.
 
 1. Read the following meeting transcript.
 2. Decide which diagram is most suitable *from this list of UML diagrams* and write it in the field "output_diagram" (use the exact name):
