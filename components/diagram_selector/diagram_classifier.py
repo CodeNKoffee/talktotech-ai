@@ -4,6 +4,26 @@ Developer: Hatem Soliman
 Purpose: Analyze meeting transcripts and determine diagram types
 """
 
+# -*- coding: utf-8 -*-
+# Updated to generate meeting objects that match SAMPLE_MEETINGS schema
+# and to fix IAM token retrieval. No heavy logic is added – only prompt
+# changes and a tiny helper to auto-increment meeting IDs per session.
+
+import json
+import requests
+
+# Simple in-memory counter that resets with the Python process (i.e. the
+# browser session described by the user).  The first call returns
+# ``meeting_001``, the second ``meeting_002`` and so on.
+_MEETING_COUNTER: int = 0
+
+
+def _next_meeting_id() -> str:
+  """Generate the next incremental meeting ID for the current session."""
+  global _MEETING_COUNTER
+  _MEETING_COUNTER += 1
+  return f"meeting_{_MEETING_COUNTER:03d}"
+
 def analyze_meeting(transcript, api_key, project_id, endpoint_url):
   """
   Simple function to analyze meeting transcript and suggest diagram type.
@@ -14,86 +34,94 @@ def analyze_meeting(transcript, api_key, project_id, endpoint_url):
   Returns:
     Dictionary with diagram type and reasoning
   """
-  """
-  # Convert to lowercase for easier matching
-  text = transcript.lower()
-  
-  # Simple keyword matching
-  if "class" in text or "object" in text or "inheritance" in text:
-    return {
-      "diagram_type": "UML Class Diagram",
-      "reasoning": "Meeting discusses classes and objects"
-    }
-  
-  elif "sequence" in text or "flow" in text or "step" in text:
-    return {
-      "diagram_type": "UML Sequence Diagram", 
-      "reasoning": "Meeting discusses process flow and steps"
-    }
-  
-  elif "process" in text or "workflow" in text or "decision" in text:
-    return {
-      "diagram_type": "Flowchart",
-      "reasoning": "Meeting discusses business processes"
-    }
-  
-  elif "component" in text or "system" in text or "architecture" in text:
-    return {
-      "diagram_type": "Component Diagram",
-      "reasoning": "Meeting discusses system components"
-    }
-  
-  elif "user" in text or "actor" in text or "requirement" in text:
-    return {
-      "diagram_type": "Use Case Diagram",
-      "reasoning": "Meeting discusses user requirements"
-    }
-  
-  else:
-    return {
-      "diagram_type": "Flowchart",
-      "reasoning": "Default choice - general process"
-    }
-  """
-
-  # Get IAM token
+  # ------------------------------------------------------------------
+  # 1) Obtain an IBM access token (fixed header for form data)
+  # ------------------------------------------------------------------
   token_resp = requests.post(
     "https://iam.cloud.ibm.com/identity/token",
     data={
       "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
-      "apikey": api_key
-    }
+      "apikey": api_key,
+    },
+    headers={"Content-Type": "application/x-www-form-urlencoded"},
   )
-  access_token = token_resp.json()["access_token"]
+  token_resp.raise_for_status()
+  access_token = token_resp.json().get("access_token")
 
-  # Prepare prompt
-  prompt = f"""
-  Analyze this meeting transcript and determine the most appropriate diagram type:
+  # ------------------------------------------------------------------
+  # 2) Craft the prompt so Granite 3.3-8b-instruct returns the fields we
+  #    need *except* the meeting ID and transcript (added in code below).
+  # ------------------------------------------------------------------
+  prompt = f"""You are an expert software architect.
 
-  \"{transcript}\"
+1. Read the following meeting transcript.
+2. Decide which diagram is most suitable *from this list of UML diagrams* and write it in the field "output_diagram" (use the exact name):
+  • Sequence Diagram
+  • Usecase Diagram
+  • Class Diagram
+  • Object Diagram
+  • Component Diagram
+  • Deployment Diagram
+  • State Diagram
+  • Timing Diagram
+  • Flowchart Diagram
+  • Activity Diagram
+  • ER Diagram
 
-  Choose from the supported UML diagrams: Sequence diagram, Usecase diagram, Class diagram, Object diagram, Activity diagram, Component diagram, Deployment diagram, State diagram, Timing diagram, ER diagram
+3. Propose a concise, descriptive title in the field "title".
+4. Extract 3-6 relevant keywords in the field "keywords".
 
-  Provide your response in this exact JSON format:
-  {{
-    "diagram_type": "chosen_diagram_type",
-    "confidence": 0.85,
-    "reasoning": "explanation of why this diagram fits",
-    "keywords": ["keyword1", "keyword2", "keyword3"]
-  }}
-  """
+Transcript (verbatim, do not rewrite):
+{transcript.strip()}
 
-# Example usage
-if __name__ == "__main__":
-  # Test with a sample transcript
-  # sample = "We discussed the User class with attributes and methods"
-  # result = analyze_meeting(sample)
-  # print(f"Input: {sample}")
-  # print(f"Result: {result['diagram_type']} - {result['reasoning']}")
-  transcript = "We discussed the user authentication flow and the steps for login and permission checking."
-  api_key = "YOUR_API_KEY"
-  project_id = "YOUR_PROJECT_ID"
-  endpoint_url = "https://eu-de.ml.cloud.ibm.com"
+Return **only** a JSON object with this exact structure and no extra keys:
+{{
+  "title": "<generated_title>",
+  "output_diagram": "<one_of_the_supported_diagrams>",
+  "keywords": ["keyword1", "keyword2", "keyword3"]
+}}
 
-  result = analyze_meeting(transcript, api_key, project_id, endpoint_url)
-  print(result)
+Do not include an "id" or the full transcript – those will be added by the calling code."""
+
+  # ------------------------------------------------------------------
+  # 3) Call the Granite model endpoint. Only minimal request code is
+  #    included; adjust 'endpoint_url' and result parsing as needed.
+  # ------------------------------------------------------------------
+  completion_resp = requests.post(
+    endpoint_url,
+    json={
+      "model_id": "ibm-granite/granite-3.3-8b-instruct",
+      "input": [
+        {"role": "user", "content": prompt}
+      ],
+      "parameters": {
+        "max_tokens": 512,
+        "temperature": 0.2,
+        "top_p": 0.9,
+      },
+    },
+    headers={
+      "Authorization": f"Bearer {access_token}",
+      "Content-Type": "application/json",
+      "X-IBM-Project-Id": project_id,
+    },
+  )
+  completion_resp.raise_for_status()
+
+  # The Granite endpoint returns a list of results; adjust if your schema
+  # differs. We expect the generated text to be the JSON we asked for.
+  generated_text = completion_resp.json()["results"][0]["generated_text"]
+  ai_data = json.loads(generated_text)
+
+  # ------------------------------------------------------------------
+  # 4) Assemble the final meeting object that matches SAMPLE_MEETINGS.
+  # ------------------------------------------------------------------
+  meeting_obj = {
+    "id": _next_meeting_id(),
+    "title": ai_data.get("title", "Untitled Meeting"),
+    "transcript": transcript.strip(),
+    "output_diagram": ai_data.get("output_diagram", "Flowchart"),
+    "keywords": ai_data.get("keywords", []),
+  }
+
+  return meeting_obj
