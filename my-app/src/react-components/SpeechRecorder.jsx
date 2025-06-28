@@ -6,6 +6,8 @@ const SpeechRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasRecorded, setHasRecorded] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [finalRecordingTime, setFinalRecordingTime] = useState(0);
 
   useEffect(() => {
     let interval;
@@ -22,6 +24,7 @@ const SpeechRecorder = () => {
   const handleRecordClick = () => {
     if (isRecording) {
       // Stopping recording
+      setFinalRecordingTime(recordingTime);
       setIsRecording(false);
       setHasRecorded(true);
     } else {
@@ -36,6 +39,10 @@ const SpeechRecorder = () => {
     console.log('Generate UML diagrams clicked');
   };
 
+  const toggleSummary = () => {
+    setShowSummary(!showSummary);
+  };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -44,6 +51,53 @@ const SpeechRecorder = () => {
 
   return (
     <div className="speech-recorder">
+      {/* Summary Button */}
+      <button className="summary-toggle" onClick={toggleSummary}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 3H15L21 9V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M9 3V9H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M9 13H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M9 17H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        Summary
+      </button>
+
+      {/* Summary Container */}
+      {showSummary && (
+        <div className="summary-container">
+          <div className="summary-header">
+            <h3>Session Summary</h3>
+            <button className="summary-close" onClick={toggleSummary}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div className="summary-content">
+            <div className="summary-item">
+              <span className="summary-label">Duration:</span>
+              <span className="summary-value">{hasRecorded ? formatTime(finalRecordingTime) : '0:00'}</span>
+            </div>
+            <div className="summary-item">
+              <span className="summary-label">Title:</span>
+              <span className="summary-value">{hasRecorded ? 'Database Design and Interaction Flow for Web Application' : 'N/A'}</span>
+            </div>
+            <div className="summary-item">
+              <span className="summary-label">Summary:</span>
+              <span className="summary-value">{hasRecorded ? 'Web Application Project Database Design covering customer relations, ticket management, and admin access flow Web Application Project Database Design covering customer relations, ticket management, and admin access flowWeb Application Project Database Design covering customer relations, ticket management, and admin access flowWeb Application Project Database Design covering customer relations, ticket management, and admin access flowWeb Application Project Database Design covering customer relations, ticket management, and admin access flow' : 'N/A'}</span>
+            </div>
+            <div className="summary-item">
+              <span className="summary-label">Keywords:</span>
+              <span className="summary-value">{hasRecorded ? 'Database, Relations, Customer, Seller, Ticket, Account, Middleware, Flow, Admin' : 'N/A'}</span>
+            </div>
+            <div className="summary-item">
+              <span className="summary-label">Output Diagrams:</span>
+              <span className="summary-value">{hasRecorded ? 'Usecase Diagram, ER Diagram, Sequence Diagram' : 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container">
         {/* Speech visualization circle */}
         <div className={`speech-circle ${isRecording ? 'recording' : ''}`}>
