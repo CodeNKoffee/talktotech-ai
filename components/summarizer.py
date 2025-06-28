@@ -2,10 +2,10 @@ import replicate
 
 # Using the new token provided by the user for all Replicate calls.
 # Dabour's token
-# replicate_client = replicate.Client(api_token="r8_UFdwKaSNK8dV7EN1lqccgQCtjJNxhYt2mJ6No")
+replicate_client = replicate.Client(api_token="r8_UFdwKaSNK8dV7EN1lqccgQCtjJNxhYt2mJ6No")
 
 # Hatem's token
-replicate_client = replicate.Client(api_token="r8_ZuNi8fo4buhXhahu9G0487TZ5ZXE3Tf3csKRW")
+# replicate_client = replicate.Client(api_token="r8_ZuNi8fo4buhXhahu9G0487TZ5ZXE3Tf3csKRW")
 
 def summarize_transcript(transcript_text: str) -> str:
   """
