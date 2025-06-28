@@ -1,5 +1,8 @@
 import re
-class GraniteCodeGenerator :
+import sys
+import time
+
+class GraniteCodeGenerator:
     """
     Generates Java classes or SQL tables from PlantUML code using Granite Code LLM.
     This class analyzes the structure of PlantUML code to determine if it represents
@@ -19,7 +22,6 @@ class GraniteCodeGenerator :
             raise ValueError("REPLICATE_API_TOKEN environment variable is not set")
         
         self.replicate_client = replicate.Client(api_token=self.replicate_token)
-
 
     def generate_real_code_from_plantuml(self, plantuml_code: str, diagram_type: str = None) -> dict:
         """
@@ -47,22 +49,28 @@ class GraniteCodeGenerator :
             expected_language = None
         
         try:
-            # === Call Granite Code on Replicate ===
-            output = self.replicate_client.run(
-                "ibm-granite/granite-3.3-8b-instruct",
-                input={"prompt": prompt}
-            )
-
-            # === Extract code block ===
-            output_text = ''.join(output)
-
+            print("🔄 Calling Granite Code LLM...")
+            
+            # try non-streaming approach
+            full_output = self._try_alternative_generation(prompt)
+            print(f"✅ Received {len(full_output)} characters from LLM")
+            
             # Detect language from code block
-            match = re.search(r"```(java|sql)?(.*?)```", output_text, re.DOTALL)
+            match = re.search(r"```(java|sql)?(.*?)```", full_output, re.DOTALL)
             detected_language = match.group(1) if match and match.group(1) else "plain"
-            code = match.group(2).strip() if match else output_text
+            code = match.group(2).strip() if match else full_output.strip()
 
             # Use expected language if available, otherwise use detected
             final_language = expected_language if expected_language else detected_language
+
+            # Validation: ensure we have actual code content
+            if len(code.strip()) < 10:  # Arbitrary minimum length
+                return {
+                    "code": full_output,  # Return raw output if parsing failed
+                    "language": final_language,
+                    "success": False,
+                    "error": "Generated code appears to be too short or incomplete"
+                }
 
             return {
                 "code": code,
@@ -71,6 +79,7 @@ class GraniteCodeGenerator :
             }
 
         except Exception as e:
+            print(f"❌ Error during code generation: {str(e)}")
             return {
                 "code": "",
                 "language": "unknown",
@@ -78,6 +87,30 @@ class GraniteCodeGenerator :
                 "error": str(e)
             }
 
+    def _try_alternative_generation(self, prompt: str) -> str:
+        """
+        Fallback method: try a simpler, non-streaming approach if available.
+        """
+        try:            
+            result = self.replicate_client.run(
+                "ibm-granite/granite-3.3-8b-instruct",
+                input={
+                    "prompt": prompt,
+                    "max_tokens": 4000,      # Allows for substantial code generation
+                    "temperature": 0.1,      # Low randomness for consistent code
+                    "top_p": 0.9            # Focus on most likely tokens
+                }
+            )
+            
+            # Handle both streaming and non-streaming responses
+            if hasattr(result, '__iter__') and not isinstance(result, str):
+                return ''.join(str(chunk) for chunk in result)
+            else:
+                return str(result)
+                
+        except Exception as e:
+            print(f"❌ Alternative method also failed: {str(e)}")
+            return ""
 
     def _get_erd_to_sql_prompt(self, plantuml_code: str) -> str:
         """Generate SQL-specific prompt for ER diagrams."""
@@ -106,9 +139,10 @@ REQUIREMENTS:
 - Use appropriate data types
 - Output ONLY the SQL code in a ```sql code block
 - No explanations or comments
+- IMPORTANT: Generate the COMPLETE code, do not truncate
 
 SQL CODE:
-"""
+```sql"""
 
     def _get_class_to_java_prompt(self, plantuml_code: str) -> str:
         """Generate Java-specific prompt for UML class diagrams."""
@@ -141,10 +175,10 @@ REQUIREMENTS:
 - Use proper Java naming conventions
 - Output ONLY the Java code in a ```java code block
 - No explanations or comments
+- IMPORTANT: Generate the COMPLETE code, do not truncate
 
 JAVA CODE:
-"""
-
+```java"""
 
     def _get_auto_detection_prompt(self, plantuml_code: str) -> str:
         """Generate auto-detection prompt when diagram type is unknown."""
@@ -196,6 +230,7 @@ The following input is written in PlantUML syntax. Your job is to analyze its st
 
 DO NOT include any explanation or extra commentary.
 Just output the converted code inside one code block.
+IMPORTANT: Generate the COMPLETE code, do not truncate.
 
 Here is the diagram input:
 
