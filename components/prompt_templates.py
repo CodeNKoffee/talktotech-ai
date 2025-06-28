@@ -1,168 +1,393 @@
 """
-PlantUML prompt templates for different diagram types.
-Each template provides specific instructions for generating syntactically correct PlantUML code.
+Enhanced PlantUML prompt templates for different diagram types.
+Each template provides comprehensive instructions for generating syntactically perfect PlantUML code.
+Optimized for Granite 3.3-8b instruct model.
 """
 
-PROMPT_TEMPLATES = {
+ENHANCED_PROMPT_TEMPLATES = {
     "UML Sequence Diagram": """
-You are an expert software architect specializing in PlantUML and UML diagrams.
+You are a PlantUML expert. Create a syntactically PERFECT sequence diagram.
 
-Task: Create a PlantUML sequence diagram based on the following transcript.
+INPUT DATA:
+- Transcript: "{transcript}"
+- Summary: "{summary}"
+- Keywords: {keywords}
 
-Transcript: "{transcript}"
+CRITICAL SYNTAX RULES - FOLLOW EXACTLY:
+1. Start with @startuml, end with @enduml
+2. Add these styling lines after @startuml:
+   skinparam monochrome true
+   skinparam shadowing false
+   skinparam style strictuml
 
-Requirements:
-1. Identify key participants (e.g., User, Frontend, Backend, Database) from the transcript.
-2. Show the sequence of interactions using proper PlantUML syntax.
-3. Use proper arrow notations: -> for synchronous calls, --> for responses.
-4. Include participant declarations at the top.
-5. Add a note referencing key aspects (e.g., {keywords}).
-6. Use styling: skinparam monochrome true, skinparam shadowing false.
+3. Participant syntax: participant ActorName
+4. Message syntax: ActorA -> ActorB : message description
+5. Response syntax: ActorB --> ActorA : response description
+6. Activation: activate ActorName / deactivate ActorName
+7. Note syntax: note right of ActorName : note text
 
-PlantUML Sequence Diagram Syntax Rules:
-- Start with @startuml and end with @enduml.
-- Declare participants: participant "Name" as Alias.
-- Use arrows: -> for calls, --> for returns, ->> for async.
-- Example:
-  @startuml
-  skinparam monochrome true
-  participant User
-  participant System
-  User -> System : request
-  System --> User : response
-  note right of System: Interaction note
-  @enduml
+EXAMPLE STRUCTURE:
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam style strictuml
 
-Generate ONLY the PlantUML code. Do not include explanations.
+participant User
+participant System
+participant Database
+
+User -> System : request data
+activate System
+System -> Database : query
+activate Database
+Database --> System : results
+deactivate Database
+System --> User : formatted response
+deactivate System
+
+note right of System : Processing logic
+@enduml
+
+REQUIREMENTS:
+- Identify 3-5 key participants from the transcript
+- Show logical sequence of interactions
+- Use proper arrow types (-> for calls, --> for responses)
+- Include activations for processing
+- Add one relevant note with keywords reference
+- Ensure every line ends properly
+- NO extra characters or formatting
+
+Generate ONLY the PlantUML code. No explanations.
 """,
+
     "UML Class Diagram": """
-You are an expert software architect specializing in PlantUML and UML diagrams.
+You are a PlantUML expert. Create a syntactically PERFECT class diagram.
 
-Task: Create a PlantUML class diagram based on the following transcript.
+INPUT DATA:
+- Transcript: "{transcript}"
+- Summary: "{summary}"
+- Keywords: {keywords}
 
-Transcript: "{transcript}"
+CRITICAL SYNTAX RULES - FOLLOW EXACTLY:
+1. Start with @startuml, end with @enduml
+2. Add these styling lines after @startuml:
+   skinparam monochrome true
+   skinparam shadowing false
+   skinparam style strictuml
 
-Requirements:
-1. Identify key classes (e.g., User, Role, Permission) and their attributes from the transcript.
-2. Show relationships (e.g., inheritance with --|>, association with -->) as described.
-3. Use proper visibility modifiers: + for public, - for private, # for protected.
-4. Include multiplicity for associations (e.g., "1" --> "*" for one-to-many).
-5. Add a note referencing key aspects (e.g., {keywords}).
-6. Use styling: skinparam monochrome true, skinparam shadowing false.
-7. Ensure syntactically correct PlantUML code.
+3. Class syntax: class ClassName {{
+   -privateAttribute: Type
+   +publicMethod(): ReturnType
+   }}
+4. Inheritance: ChildClass --|> ParentClass
+5. Association: ClassA --> ClassB
+6. Composition: ClassA --* ClassB
+7. Multiplicity: ClassA "1" --> "*" ClassB
 
-PlantUML Class Diagram Syntax Rules:
-- Start with @startuml and end with @enduml.
-- Define classes: class ClassName {{ -attribute: Type +method(): ReturnType }}.
-- Relationships: --|> for inheritance, --> for association, --* for composition, "1" --> "*" for one-to-many.
-- Example:
-  @startuml
-  skinparam monochrome true
-  class Base {{ -id: String }}
-  class Derived {{ -name: String }}
-  Derived --|> Base
-  Derived "1" --> "*" Related
-  note right of Derived: Related entities
-  @enduml
+EXAMPLE STRUCTURE:
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam style strictuml
 
-Generate ONLY the PlantUML code. Do not include explanations.
+class BaseEntity {{
+    -id: String
+    -createdAt: DateTime
+    +getId(): String
+}}
+
+class User {{
+    -name: String
+    -email: String
+    +getName(): String
+    +setName(name: String): void
+}}
+
+class Role {{
+    -roleName: String
+    +getRole(): String
+}}
+
+User --|> BaseEntity
+User "1" --> "*" Role
+
+note right of User : Domain entity
+@enduml
+
+REQUIREMENTS:
+- Identify 3-5 key classes from the transcript
+- Include 2-3 attributes per class with proper visibility (-, +, #)
+- Include 1-2 methods per class
+- Show relationships between classes
+- Use proper PlantUML relationship syntax
+- Add one note referencing keywords
+- Ensure proper bracket matching {{ }}
+
+Generate ONLY the PlantUML code. No explanations.
 """,
+
     "Flowchart": """
-You are an expert software architect specializing in PlantUML and UML diagrams.
+You are a PlantUML expert. Create a syntactically PERFECT activity diagram (flowchart).
 
-Task: Create a PlantUML activity diagram (flowchart) based on the following transcript.
+INPUT DATA:
+- Transcript: "{transcript}"
+- Summary: "{summary}"  
+- Keywords: {keywords}
 
-Transcript: "{transcript}"
+CRITICAL SYNTAX RULES - FOLLOW EXACTLY:
+1. Start with @startuml, end with @enduml
+2. Add these styling lines after @startuml:
+   skinparam monochrome true
+   skinparam shadowing false
+   skinparam style strictuml
 
-Requirements:
-1. Show workflow steps and decision points from the transcript.
-2. Use proper PlantUML activity diagram syntax.
-3. Include decision diamonds with if/then/else logic.
-4. Show parallel processes with fork/end fork if mentioned.
-5. Add a note referencing key aspects (e.g., {keywords}).
-6. Use styling: skinparam monochrome true, skinparam shadowing false.
+3. Always start with: start
+4. Activities: :Activity Description;
+5. Decisions: if (Condition?) then (yes) ... else (no) ... endif
+6. Parallel: fork ... fork again ... end fork
+7. Always end with: stop
 
-PlantUML Activity Diagram Syntax Rules:
-- Start with @startuml and end with @enduml.
-- Use :activity; for activities.
-- Use if (condition) then (yes) ... else (no) ... endif for decisions.
-- Use fork and end fork for parallel processes.
-- Example:
-  @startuml
-  skinparam monochrome true
-  start
-  :Start Process;
-  if (Condition?) then (yes)
-    :Action 1;
-  else (no)
-    :Action 2;
-  endif
-  stop
-  @enduml
+EXAMPLE STRUCTURE:
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam style strictuml
 
-Generate ONLY the PlantUML code. Do not include explanations.
+start
+:Initialize Process;
+if (Data Valid?) then (yes)
+    :Process Data;
+    :Generate Output;
+else (no)
+    :Handle Error;
+    :Log Issue;
+endif
+:Cleanup Resources;
+stop
+
+note right : Process workflow
+@enduml
+
+REQUIREMENTS:
+- Extract workflow steps from transcript
+- Include decision points with if/then/else
+- Use proper activity syntax with colons and semicolons
+- Show alternative paths
+- Include start and stop
+- Add one note with keywords reference
+- Each activity on separate line
+
+Generate ONLY the PlantUML code. No explanations.
 """,
+
     "Component Diagram": """
-You are an expert software architect specializing in PlantUML and UML diagrams.
+You are a PlantUML expert. Create a syntactically PERFECT component diagram.
 
-Task: Create a PlantUML component diagram based on the following transcript.
+INPUT DATA:
+- Transcript: "{transcript}"
+- Summary: "{summary}"
+- Keywords: {keywords}
 
-Transcript: "{transcript}"
+CRITICAL SYNTAX RULES - FOLLOW EXACTLY:
+1. Start with @startuml, end with @enduml
+2. Add these styling lines after @startuml:
+   skinparam monochrome true
+   skinparam shadowing false
+   skinparam style strictuml
 
-Requirements:
-1. Identify system components (e.g., services, databases) from the transcript.
-2. Show interfaces and dependencies (e.g., REST APIs, message queues).
-3. Use proper PlantUML component syntax.
-4. Include databases with database "Name".
-5. Add a note referencing key aspects (e.g., {keywords}).
-6. Use styling: skinparam monochrome true, skinparam shadowing false.
+3. Components: [ComponentName] or component "Name" as Alias
+4. Interfaces: interface "InterfaceName" as Alias  
+5. Databases: database "DatabaseName" as Alias
+6. Connections: [ComponentA] --> [ComponentB] : connection type
+7. Grouping: package "PackageName" {{ ... }}
 
-PlantUML Component Diagram Syntax Rules:
-- Start with @startuml and end with @enduml.
-- Components: [ComponentName] or component "Name" as Alias.
-- Interfaces: interface "InterfaceName" as Alias.
-- Connections: --> for dependencies, : label for connection type.
-- Example:
-  @startuml
-  skinparam monochrome true
-  [Frontend] --> [Backend] : API
-  [Backend] --> [Database] : SQL
-  note right of Backend: System note
-  @enduml
+EXAMPLE STRUCTURE:
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam style strictuml
 
-Generate ONLY the PlantUML code. Do not include explanations.
+[Frontend] as FE
+[API Gateway] as API
+[Business Service] as BS
+[Data Layer] as DL
+database "Database" as DB
+
+FE --> API : HTTP/REST
+API --> BS : Internal API
+BS --> DL : Data Access
+DL --> DB : SQL Queries
+
+note right of BS : Core business logic
+@enduml
+
+REQUIREMENTS:
+- Identify system components from transcript
+- Show data flow and dependencies
+- Use proper component syntax with brackets []
+- Include databases and external systems
+- Label connections with interaction type
+- Group related components if mentioned
+- Add one note with keywords reference
+
+Generate ONLY the PlantUML code. No explanations.
 """,
+
     "Use Case Diagram": """
-You are an expert software architect specializing in PlantUML and UML diagrams.
+You are a PlantUML expert. Create a syntactically PERFECT use case diagram.
 
-Task: Create a PlantUML use case diagram based on the following transcript.
+INPUT DATA:
+- Transcript: "{transcript}"
+- Summary: "{summary}"
+- Keywords: {keywords}
 
-Transcript: "{transcript}"
+CRITICAL SYNTAX RULES - FOLLOW EXACTLY:
+1. Start with @startuml, end with @enduml
+2. Add these styling lines after @startuml:
+   skinparam monochrome true
+   skinparam shadowing false
+   skinparam style strictuml
 
-Requirements:
-1. Identify actors (e.g., User, Administrator) and use cases from the transcript.
-2. Show relationships between actors and use cases (--> for associations).
-3. Include inheritance relationships (--|>) if mentioned.
-4. Use proper PlantUML use case syntax.
-5. Add a note referencing key aspects (e.g., {keywords}).
-6. Use styling: skinparam monochrome true, skinparam shadowing false.
+3. Actors: actor "Actor Name" as Alias or actor ActorName
+4. Use cases: (Use Case Name) as Alias or usecase "Name" as Alias
+5. Associations: Actor --> (UseCase)
+6. Inheritance: ChildActor --|> ParentActor
+7. Include: (UseCase1) --> (UseCase2) : <<include>>
+8. Extend: (UseCase1) --> (UseCase2) : <<extend>>
 
-PlantUML Use Case Diagram Syntax Rules:
-- Start with @startuml and end with @enduml.
-- Actors: actor "ActorName" as Alias.
-- Use cases: (Use Case Name) or usecase "Name" as Alias.
-- Associations: --> for actor to use case.
-- Inheritance: --|> for actor inheritance.
-- Example:
-  @startuml
-  skinparam monochrome true
-  actor User
-  actor Admin
-  Admin --|> User
-  User --> (Use System)
-  note right of User: User actions
-  @enduml
+EXAMPLE STRUCTURE:
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam style strictuml
 
-Generate ONLY the PlantUML code. Do not include explanations.
+actor "End User" as User
+actor "Administrator" as Admin
+
+Admin --|> User
+
+(Login System) as Login
+(Manage Data) as Manage
+(Generate Reports) as Reports
+(System Configuration) as Config
+
+User --> Login
+User --> Reports
+Admin --> Manage
+Admin --> Config
+
+Login --> (Validate Credentials) : <<include>>
+
+note right of User : System interactions
+@enduml
+
+REQUIREMENTS:
+- Identify actors (people, systems) from transcript
+- Identify use cases (functional requirements)
+- Show actor-use case associations with -->
+- Include inheritance relationships if applicable
+- Add include/extend relationships if mentioned
+- Use proper parentheses for use cases ()
+- Add one note with keywords reference
+
+Generate ONLY the PlantUML code. No explanations.
 """
 }
+
+# Additional validation patterns for each diagram type
+DIAGRAM_VALIDATION_PATTERNS = {
+    "UML Sequence Diagram": {
+        "required_patterns": [
+            r"participant\s+\w+",
+            r"\w+\s*->\s*\w+\s*:",
+            r"@startuml",
+            r"@enduml"
+        ],
+        "forbidden_patterns": [
+            r"class\s+\w+",
+            r"actor\s+",
+            r"\(.*\)"
+        ]
+    },
+    "UML Class Diagram": {
+        "required_patterns": [
+            r"class\s+\w+\s*\{",
+            r"[+-#]\w+:",
+            r"@startuml", 
+            r"@enduml"
+        ],
+        "forbidden_patterns": [
+            r"participant\s+",
+            r"actor\s+",
+            r"start\s*$"
+        ]
+    },
+    "Flowchart": { 
+        "required_patterns": [
+            r"start\s*$",
+            r":[^;]+;",
+            r"@startuml",
+            r"@enduml"
+        ],
+        "forbidden_patterns": [
+            r"class\s+\w+",
+            r"participant\s+",
+            r"actor\s+"
+        ]
+    },
+    "Component Diagram": {
+        "required_patterns": [
+            r"\[[\w\s]+\]",
+            r"-->\s*",
+            r"@startuml",
+            r"@enduml"
+        ],
+        "forbidden_patterns": [
+            r"class\s+\w+",
+            r"participant\s+",
+            r"start\s*$"
+        ]
+    },
+    "Use Case Diagram": {
+        "required_patterns": [
+            r"actor\s+",
+            r"\([^)]+\)",
+            r"@startuml",
+            r"@enduml"
+        ],
+        "forbidden_patterns": [
+            r"class\s+\w+",
+            r"participant\s+",
+            r"start\s*$"
+        ]
+    }
+}
+
+def get_enhanced_prompt(diagram_type: str, transcript: str, summary: str = "", keywords: list = None) -> str:
+    """
+    Get enhanced prompt for specific diagram type with proper formatting.
+    
+    Args:
+        diagram_type: Type of UML diagram to generate
+        transcript: The original transcript text
+        summary: Summarized version of transcript
+        keywords: List of relevant keywords
+    
+    Returns:
+        Formatted prompt string ready for AI model
+    """
+    if keywords is None:
+        keywords = []
+    
+    template = ENHANCED_PROMPT_TEMPLATES.get(diagram_type)
+    if not template:
+        raise ValueError(f"Unknown diagram type: {diagram_type}")
+    
+    # Format keywords as a string
+    keywords_str = ", ".join(keywords) if keywords else "None provided"
+    
+    return template.format(
+        transcript=transcript[:2000],
+        summary=summary[:500],  # Limit summary length to avoid excessive input
+        keywords=keywords_str   # Use formatted keywords string
+    )

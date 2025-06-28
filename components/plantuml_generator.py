@@ -1,16 +1,14 @@
 """
 Modular PlantUML Generator using IBM Granite Code model.
-Generates UML diagrams from meeting transcripts using AI.
+Generates UML diagrams from meeting transcripts using AI with enhanced error handling.
 """
 import os
 from langchain_community.llms import Replicate
-from prompt_templates import PROMPT_TEMPLATES
-from plantuml_utils import clean_plantuml_output, validate_plantuml, get_fallback_diagram, format_output
-from meeting_data import SAMPLE_MEETINGS, get_meeting_by_id, get_meetings_by_diagram_type, get_all_diagram_types
+from plantuml_utils import generate_plantuml_with_error_handling, PlantUMLProcessor, create_error_handler
 
 class GranitePlantUMLGenerator:
     def __init__(self):
-        """Initialize the Granite Code LLM for PlantUML generation"""
+        """Initialize the Granite Code LLM for PlantUML generation with enhanced error handling"""
         self.replicate_token = os.getenv("REPLICATE_API_TOKEN")
         if not self.replicate_token:
             raise ValueError("REPLICATE_API_TOKEN environment variable is not set")
@@ -24,100 +22,136 @@ class GranitePlantUMLGenerator:
                 "top_p": 0.9
             }
         )
+        
+        # Initialize the enhanced processor
+        self.processor = PlantUMLProcessor()
+        self.error_handler = create_error_handler()
     
-    def generate_plantuml(self, transcript, diagram_type, keywords=None):
+    def _ai_generate_func(self, prompt: str) -> str:
+        """Internal function to call the AI model with a prompt"""
+        return self.llm.invoke(prompt)
+    
+    def generate_plantuml(self, transcript, diagram_type, keywords=None, summary=""):
         """
-        Generate PlantUML syntax for a given transcript and diagram type using Granite Code.
+        Generate PlantUML syntax using enhanced error handling and processing.
         
         Parameters:
         - transcript (str): Transcribed text describing the system or process.
         - diagram_type (str): Desired diagram type (e.g., 'UML Sequence Diagram', 'UML Class Diagram').
         - keywords (list, optional): List of keywords to guide the AI.
+        - summary (str, optional): Summary of the transcript for better context.
         
         Returns:
-        - str: PlantUML code wrapped in @startuml and @enduml.
+        - dict: Complete result with plantuml_code, success status, validation info
         """
-        if diagram_type not in PROMPT_TEMPLATES:
-            raise ValueError(f"Unsupported diagram type: {diagram_type}. Supported types: {list(PROMPT_TEMPLATES.keys())}")
-
-        keywords_str = ", ".join(keywords) if keywords else "general system design"
-        prompt = PROMPT_TEMPLATES[diagram_type].format(
-            transcript=transcript,
-            keywords=keywords_str
-        )
-
+        if keywords is None:
+            keywords = []
+            
         try:
-            response = self.llm.invoke(prompt)
-            cleaned_response = clean_plantuml_output(response)
+            # Use enhanced error handling function
+            result = generate_plantuml_with_error_handling(
+                diagram_type=diagram_type,
+                transcript=transcript,
+                summary=summary,
+                keywords=keywords,
+                ai_generate_func=self._ai_generate_func
+            )
             
-            if not validate_plantuml(cleaned_response, diagram_type):
-                print(f"Generated output for {diagram_type} doesn't contain valid PlantUML. Using fallback.")
-                return get_fallback_diagram(diagram_type)
+            # Print status for user feedback
+            if not result['success']:
+                print(f"Warning: {result['status_message']}")
             
-            return cleaned_response
+            return result
             
         except Exception as e:
             print(f"Error generating PlantUML with Granite Code: {str(e)}")
-            return get_fallback_diagram(diagram_type)
+            # Return fallback result
+            fallback_code = self.processor.get_fallback_diagram(diagram_type, transcript[:100])
+            return {
+                'plantuml_code': fallback_code,
+                'success': False,
+                'is_valid': True,  # Fallback is always valid
+                'status_message': f"Exception occurred: {str(e)[:100]}",
+                'validation_errors': [],
+                'diagram_type': diagram_type,
+                'used_fallback': True
+            }
+    
+    def generate_plantuml_simple(self, transcript, diagram_type, keywords=None, summary=""):
+        """
+        Simple interface that returns just the PlantUML code (for backward compatibility).
+        """
+        result = self.generate_plantuml(transcript, diagram_type, keywords, summary)
+        return result['plantuml_code']
     
     def generate_from_meeting(self, meeting):
-        """Generate PlantUML from a meeting object"""
-        return self.generate_plantuml(
+        """Generate PlantUML from a meeting object with enhanced processing"""
+        result = self.generate_plantuml(
             transcript=meeting["transcript"],
             diagram_type=meeting["output_diagram"],
-            keywords=meeting["keywords"]
+            keywords=meeting["keywords"],
+            summary=meeting.get("summary", "")  # Use summary if available
         )
-
-def test_single_meeting(generator, meeting_id):
-    """Test generation for a single meeting"""
-    meeting = get_meeting_by_id(meeting_id)
-    if not meeting:
-        print(f"Meeting {meeting_id} not found!")
-        return
+        return result
     
-    plantuml_code = generator.generate_from_meeting(meeting)
-    print(format_output(meeting, plantuml_code))
-
-def test_diagram_type(generator, diagram_type):
-    """Test generation for all meetings of a specific diagram type"""
-    meetings = get_meetings_by_diagram_type(diagram_type)
-    print(f"\n{'='*80}")
-    print(f"Testing all {diagram_type} examples ({len(meetings)} meetings)")
-    print(f"{'='*80}")
-    
-    for meeting in meetings:
-        plantuml_code = generator.generate_from_meeting(meeting)
-        print(format_output(meeting, plantuml_code))
-
-def test_all_meetings(generator):
-    """Test generation for all sample meetings"""
-    print(f"\n{'='*80}")
-    print(f"Testing all sample meetings ({len(SAMPLE_MEETINGS)} total)")
-    print(f"Available diagram types: {get_all_diagram_types()}")
-    print(f"{'='*80}")
-    
-    for meeting in SAMPLE_MEETINGS:
-        plantuml_code = generator.generate_from_meeting(meeting)
-        print(format_output(meeting, plantuml_code))
+    def batch_process_meetings(self, meeting_list):
+        """
+        Process multiple meetings with enhanced error handling.
+        
+        Args:
+            meeting_list: List of meeting dictionaries
+            
+        Returns:
+            List of results with metadata for each meeting
+        """
+        results = []
+        for meeting in meeting_list:
+            print(f"Processing: {meeting.get('title', meeting.get('id', 'Unknown'))}")
+            result = self.generate_from_meeting(meeting)
+            
+            # Add meeting metadata to result
+            result['meeting_id'] = meeting.get('id', 'unknown')
+            result['meeting_title'] = meeting.get('title', 'Unknown')
+            results.append(result)
+            
+        return results
 
 def main():
-    """Main function with various testing options"""
+    """Enhanced demo of the PlantUML generator with error handling"""
     generator = GranitePlantUMLGenerator()
     
-    # Test options - uncomment the one you want to run
+    # Enhanced demo - generate a class diagram with full result info
+    transcript = """
+    We need a simple User class with username and email fields, 
+    and a method to validate the email address.
+    """
     
-    # Option 1: Test a single meeting
-    test_single_meeting(generator, "meeting_002")
-    
-    # Option 2: Test all meetings of a specific diagram type
-    # test_diagram_type(generator, "UML Class Diagram")
-    
-    # Option 3: Test all meetings (warning: this will generate many diagrams)
-    # test_all_meetings(generator)
-    
-    # Option 4: Test specific diagram types
-    # for diagram_type in ["UML Sequence Diagram", "Flowchart", "Component Diagram"]:
-    #     test_diagram_type(generator, diagram_type)
+    try:
+        # Get full result with metadata
+        result = generator.generate_plantuml(
+            transcript=transcript,
+            diagram_type="UML Class Diagram",
+            keywords=["user", "validation", "email"],
+            summary="User class with email validation"
+        )
+        
+        print("=" * 60)
+        print("Enhanced PlantUML Generation Result:")
+        print("=" * 60)
+        print(f"Success: {result['success']}")
+        print(f"Valid: {result['is_valid']}")
+        print(f"Status: {result['status_message']}")
+        print(f"Used Fallback: {result['used_fallback']}")
+        if result['validation_errors']:
+            print(f"Validation Errors: {result['validation_errors']}")
+        print("=" * 60)
+        print("Generated PlantUML Code:")
+        print(result['plantuml_code'])
+        print("=" * 60)
+        
+    except Exception as e:
+        print(f"Demo failed: {e}")
+        print("Please ensure REPLICATE_API_TOKEN is set and you have internet connectivity.")
 
 if __name__ == "__main__":
     main()

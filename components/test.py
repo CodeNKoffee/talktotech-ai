@@ -1,154 +1,92 @@
 """
-Test runner for the modular PlantUML Generator.
-Uses components from separate modules for clean architecture.
+Simplified test runner for the PlantUML Generator.
+Two core options: run by meeting ID or run by diagram type.
 """
-import os
-from langchain_community.llms import Replicate
-from prompt_templates import PROMPT_TEMPLATES
-from plantuml_utils import clean_plantuml_output, validate_plantuml, get_fallback_diagram, format_output
+from plantuml_generator import GranitePlantUMLGenerator
+from plantuml_utils import PlantUMLProcessor
 from meeting_data import SAMPLE_MEETINGS, get_meeting_by_id, get_meetings_by_diagram_type, get_all_diagram_types
 
-class GranitePlantUMLGenerator:
-    def __init__(self):
-        """Initialize the Granite Code LLM for PlantUML generation"""
-        self.replicate_token = os.getenv("REPLICATE_API_TOKEN")
-        if not self.replicate_token:
-            raise ValueError("REPLICATE_API_TOKEN environment variable is not set")
-        
-        self.llm = Replicate(
-            model="ibm-granite/granite-3.3-8b-instruct",
-            replicate_api_token=self.replicate_token,
-            model_kwargs={
-                "temperature": 0.1,
-                "max_tokens": 2000,
-                "top_p": 0.9
-            }
-        )
+def format_enhanced_output(meeting, result):
+    """Format the enhanced result output with detailed metadata"""
+    separator = "=" * 80
+    title = f"Generated PlantUML for: {meeting['title']}"
     
-    def generate_plantuml(self, transcript, diagram_type, keywords=None):
-        """
-        Generate PlantUML syntax using modular components.
-        Uses templates from prompt_templates.py and utilities from plantuml_utils.py
-        """
-        if diagram_type not in PROMPT_TEMPLATES:
-            raise ValueError(f"Unsupported diagram type: {diagram_type}. Supported types: {list(PROMPT_TEMPLATES.keys())}")
-
-        keywords_str = ", ".join(keywords) if keywords else "general system design"
-        prompt = PROMPT_TEMPLATES[diagram_type].format(
-            transcript=transcript,
-            keywords=keywords_str
-        )
-
-        try:
-            response = self.llm.invoke(prompt)
-            cleaned_response = clean_plantuml_output(response)
-            
-            if not validate_plantuml(cleaned_response, diagram_type):
-                print(f"Generated output for {diagram_type} doesn't contain valid PlantUML. Using fallback.")
-                return get_fallback_diagram(diagram_type)
-            
-            return cleaned_response
-            
-        except Exception as e:
-            print(f"Error generating PlantUML with Granite Code: {str(e)}")
-            return get_fallback_diagram(diagram_type)
+    output = f"\n{separator}\n"
+    output += f"{title}\n"
+    output += f"Meeting ID: {meeting['id']}\n"
+    output += f"Diagram Type: {meeting['output_diagram']}\n"
+    output += f"Keywords: {', '.join(meeting['keywords'])}\n"
+    output += f"Success: {result['success']} | Valid: {result['is_valid']} | Used Fallback: {result['used_fallback']}\n"
+    output += f"Status: {result['status_message']}\n"
     
-    def generate_from_meeting(self, meeting):
-        """Generate PlantUML from a meeting object using modular data"""
-        return self.generate_plantuml(
-            transcript=meeting["transcript"],
-            diagram_type=meeting["output_diagram"],
-            keywords=meeting["keywords"]
-        )
-
-def test_single_meeting(generator, meeting_id):
-    """Test generation for a single meeting using meeting_data.py"""
-    meeting = get_meeting_by_id(meeting_id)
-    if not meeting:
-        print(f"Meeting {meeting_id} not found!")
-        return
+    if result['validation_errors']:
+        output += f"Validation Errors: {'; '.join(result['validation_errors'])}\n"
     
-    plantuml_code = generator.generate_from_meeting(meeting)
-    print(format_output(meeting, plantuml_code))
+    output += f"{separator}\n"
+    output += result['plantuml_code']
+    output += f"\n{separator}\n"
+    
+    return output
 
 def test_diagram_type(generator, diagram_type):
     """Test generation for all meetings of a specific diagram type"""
     meetings = get_meetings_by_diagram_type(diagram_type)
     print(f"\n{'='*80}")
     print(f"Testing all {diagram_type} examples ({len(meetings)} meetings)")
+    print(f"Enhanced processing with error handling enabled")
     print(f"{'='*80}")
     
     for meeting in meetings:
-        plantuml_code = generator.generate_from_meeting(meeting)
-        print(format_output(meeting, plantuml_code))
-
-def test_all_meetings(generator):
-    """Test generation for all sample meetings"""
-    print(f"\n{'='*80}")
-    print(f"Testing all sample meetings ({len(SAMPLE_MEETINGS)} total)")
-    print(f"Available diagram types: {get_all_diagram_types()}")
-    print(f"{'='*80}")
-    
-    for meeting in SAMPLE_MEETINGS:
-        plantuml_code = generator.generate_from_meeting(meeting)
-        print(format_output(meeting, plantuml_code))
+        result = generator.generate_from_meeting(meeting)
+        print(format_enhanced_output(meeting, result))
 
 def main():
-    """Interactive test runner with multiple options"""
+    """Simplified test runner with two core options"""
     generator = GranitePlantUMLGenerator()
     
-    print("🎯 PlantUML Generator Test Suite")
+    print("🎯 PlantUML Generator - Enhanced Processing")
     print("=" * 50)
-    print("Available test options:")
-    print("1. Test single meeting (E-commerce Class Diagram)")
-    print("2. Test all Class Diagram meetings")
-    print("3. Test all Sequence Diagram meetings")
-    print("4. Test all meetings (generates many diagrams)")
-    print("5. Test specific meeting by ID")
-    print("6. Show available meetings and diagram types")
+    print("Available options:")
+    print("1. Run by Meeting ID")
+    print("2. Run by UML Diagram Type")
     
-    choice = input("\nEnter your choice (1-6, default=1): ").strip() or "1"
+    choice = input("\nEnter your choice (1-2): ").strip()
     
     if choice == "1":
-        print("\n🔸 Testing E-commerce Domain Model (Class Diagram)...")
-        test_single_meeting(generator, "meeting_002")
-    
-    elif choice == "2":
-        print("\n🔸 Testing all Class Diagram examples...")
-        test_diagram_type(generator, "UML Class Diagram")
-    
-    elif choice == "3":
-        print("\n🔸 Testing all Sequence Diagram examples...")
-        test_diagram_type(generator, "UML Sequence Diagram")
-    
-    elif choice == "4":
-        print("\n🔸 Testing ALL meetings (this will take a while)...")
-        confirm = input("Are you sure? This will generate many diagrams. (y/N): ").strip().lower()
-        if confirm == 'y':
-            test_all_meetings(generator)
-        else:
-            print("Cancelled.")
-    
-    elif choice == "5":
-        print("\nAvailable meeting IDs:")
-        for meeting in SAMPLE_MEETINGS[:5]:
-            print(f"  - {meeting['id']}: {meeting['title']} ({meeting['output_diagram']})")
-        print(f"  ... and {len(SAMPLE_MEETINGS) - 5} more")
-        
-        meeting_id = input("\nEnter meeting ID: ").strip()
-        test_single_meeting(generator, meeting_id)
-    
-    elif choice == "6":
-        print(f"\n📊 Available Data:")
-        print(f"  Total meetings: {len(SAMPLE_MEETINGS)}")
-        print(f"  Diagram types: {get_all_diagram_types()}")
-        print(f"\n📝 All meetings:")
+        print("\n📋 Available Meeting IDs:")
         for meeting in SAMPLE_MEETINGS:
             print(f"  {meeting['id']}: {meeting['title']} ({meeting['output_diagram']})")
+        
+        meeting_id = input("\nEnter meeting ID: ").strip()
+        meeting = get_meeting_by_id(meeting_id)
+        
+        if meeting:
+            print(f"\n🔸 Processing: {meeting['title']}")
+            result = generator.generate_from_meeting(meeting)
+            print(format_enhanced_output(meeting, result))
+        else:
+            print(f"❌ Meeting '{meeting_id}' not found!")
+    
+    elif choice == "2":
+        diagram_types = get_all_diagram_types()
+        print(f"\n📊 Available UML Diagram Types:")
+        for i, diagram_type in enumerate(diagram_types, 1):
+            meetings_count = len(get_meetings_by_diagram_type(diagram_type))
+            print(f"  {i}. {diagram_type} ({meetings_count} meetings)")
+        
+        try:
+            type_choice = int(input(f"\nSelect diagram type (1-{len(diagram_types)}): ").strip())
+            if 1 <= type_choice <= len(diagram_types):
+                selected_type = diagram_types[type_choice - 1]
+                print(f"\n🔸 Processing all {selected_type} meetings...")
+                test_diagram_type(generator, selected_type)
+            else:
+                print("❌ Invalid selection!")
+        except ValueError:
+            print("❌ Please enter a valid number!")
     
     else:
-        print("Invalid choice. Running default test...")
-        test_single_meeting(generator, "meeting_002")
+        print("❌ Invalid choice! Please select 1 or 2.")
 
 if __name__ == "__main__":
     main()
