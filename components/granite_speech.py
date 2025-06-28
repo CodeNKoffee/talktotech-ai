@@ -19,15 +19,18 @@ def upload():
     audio_file.save(audio_path)
 
     # Transcribe
-    print("Transcribing audio...")
-    transcript = replicate_client.run(
-        "vaibhavs10/incredibly-fast-whisper:3ab86df6c8f54c11309d4d1f930ac292bad43ace52d10c80d87eb258b3c9f79c",
-        input={
-            "audio": "recording.wav",
-            "task": "transcribe",
-            "language": "english"
-        }
-    )
+
+    with open("recording.wav", "rb") as audio_file:
+        print("Transcribing audio... This may take a while.")
+        # Run the Whisper model
+        transcript = replicate_client.run(
+            "vaibhavs10/incredibly-fast-whisper:3ab86df6c8f54c11309d4d1f930ac292bad43ace52d10c80d87eb258b3c9f79c",
+            input={
+                "audio": audio_file,
+                "task": "transcribe",
+                "language": "english"
+            }
+        )
     transcript_text = transcript["text"]
 
     # Summarize
