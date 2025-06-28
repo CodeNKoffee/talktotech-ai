@@ -14,7 +14,7 @@ def summarize_transcript(transcript_text: str) -> str:
   prompt = (
     "Please summarize the following meeting transcript in a clear and concise way mentioning all important events,"
     " decisions and ideas. You should divide your summary into different topics/parts in chronological order as appropriate."
-    " Format your summary appropriately using headers, bullet points and what not. Your answer should include only the summary.\n\n"
+    " Format your summary appropriately using subheaders, bullet points and what not. Your answer should include only the summary and no main title.\n\n"
     + transcript_text
   )
   print("Summarizing transcript...")

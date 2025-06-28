@@ -39,7 +39,9 @@ def analyze_meeting(transcript: str) -> dict:
   prompt = f"""You are an expert at what diagrams are most suitable for a given meeting transcript.
 
 1. Read the following meeting transcript.
-2. Decide which diagram is most suitable *from this list of UML diagrams* and write it in the field "output_diagram" (use the exact name):
+2. Decide which diagram(s) is most suitable *from this list of UML diagrams* and write it in the array field "output_diagrams" (use the exact names). You can choose up to 3 diagrams 
+    if you find that more than 1 is suitable with high confidence. Be very careful not to output more than 3 diagrams and at the same time not to output too many diagrams
+    which may not be needed. For example if they are mentioned very briefly, they should not be included in the result:
   • Sequence Diagram
   • Usecase Diagram
   • Class Diagram
@@ -61,7 +63,7 @@ Transcript (verbatim, do not rewrite):
 Return **only** a JSON object with this exact structure and no extra keys:
 {{
   "title": "<generated_title>",
-  "output_diagram": "<one_of_the_supported_diagrams>",
+  "output_diagram": ["diagram1", "diagram2 (if applicable)", "diagram3 (if applicable)"],
   "keywords": ["keyword1", "keyword2", "keyword3"]
 }}
 
@@ -74,7 +76,7 @@ Do not include an "id" or the full transcript – those will be added by the cal
       "prompt": prompt,
       "temperature": 0.3,
       "max_tokens": 400,
-      "top_p": 0.9,   # High top_p to ensure the model is not too conservative meaning it will creates a larger shortlist of potential words. The output can be more creative and diverse because the model has more "good" options to choose from. It's a safe value that prevents the model from getting stuck while still ensuring relevance. While a low top_p (like 0.2): This creates a very small, exclusive shortlist of only the most likely words. The output will be much more predictable, safe, and often repetitive.
+      "top_p": 0.6,   # High top_p to ensure the model is not too conservative meaning it will creates a larger shortlist of potential words. The output can be more creative and diverse because the model has more "good" options to choose from. It's a safe value that prevents the model from getting stuck while still ensuring relevance. While a low top_p (like 0.2): This creates a very small, exclusive shortlist of only the most likely words. The output will be much more predictable, safe, and often repetitive.
     },
   )
   
@@ -95,7 +97,7 @@ Do not include an "id" or the full transcript – those will be added by the cal
     "id": _next_meeting_id(),
     "title": ai_data.get("title", "Untitled Meeting"),
     "transcript": transcript.strip(),
-    "output_diagram": ai_data.get("output_diagram", "Flowchart"),
+    "output_diagram": ai_data.get("output_diagram", []),
     "keywords": ai_data.get("keywords", []),
   }
 

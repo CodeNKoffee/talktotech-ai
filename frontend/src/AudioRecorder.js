@@ -3,7 +3,10 @@ import React, { useState, useRef } from "react";
 const AudioRecorder = () => {
   const [recording, setRecording] = useState(false);
   const [status, setStatus] = useState("");
+  const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
+  const [outputDiagram, setOutputDiagram] = useState("");
+  const [keywords, setKeywords] = useState([]);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
@@ -36,7 +39,10 @@ const AudioRecorder = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setSummary(data.summary);
+          setTitle(data.title || "");
+          setSummary(data.summary || "");
+          setOutputDiagram(data.output_diagram || "");
+          setKeywords(data.keywords || []);
           setStatus("Done!");
         } else {
           setStatus("Error during processing.");
@@ -66,10 +72,36 @@ const AudioRecorder = () => {
         ⏹️ Stop Recording
       </button>
       <p>{status}</p>
+
+      {title && (
+        <>
+          <h2>Title</h2>
+          <p>{title}</p>
+        </>
+      )}
+
       {summary && (
         <>
           <h2>Summary</h2>
           <pre style={{ whiteSpace: "pre-wrap" }}>{summary}</pre>
+        </>
+      )}
+
+      {outputDiagram && (
+        <>
+          <h2>Output Diagram</h2>
+          <pre style={{ whiteSpace: "pre-wrap" }}>{outputDiagram}</pre>
+        </>
+      )}
+
+      {keywords && keywords.length > 0 && (
+        <>
+          <h2>Keywords</h2>
+          <ul>
+            {keywords.map((kw, index) => (
+              <li key={index}>{kw}</li>
+            ))}
+          </ul>
         </>
       )}
     </div>
