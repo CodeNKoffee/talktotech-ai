@@ -5,6 +5,7 @@ import './SpeechRecorder.css';
 const SpeechRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [hasRecorded, setHasRecorded] = useState(false);
 
   useEffect(() => {
     let interval;
@@ -19,7 +20,20 @@ const SpeechRecorder = () => {
   }, [isRecording]);
 
   const handleRecordClick = () => {
-    setIsRecording(!isRecording);
+    if (isRecording) {
+      // Stopping recording
+      setIsRecording(false);
+      setHasRecorded(true);
+    } else {
+      // Starting recording
+      setIsRecording(true);
+      setHasRecorded(false);
+    }
+  };
+
+  const handleGenerateUML = () => {
+    // This will later integrate with backend
+    console.log('Generate UML diagrams clicked');
   };
 
   const formatTime = (seconds) => {
@@ -102,8 +116,18 @@ const SpeechRecorder = () => {
         
         {/* Instruction text */}
         <p className="instruction-text">
-          {isRecording ? 'Listening...' : 'Click to start recording'}
+          {isRecording ? 'Listening...' : hasRecorded ? 'Recording complete!' : 'Click to start recording'}
         </p>
+
+        {/* Generate UML Button   btn , circle, arrow, text */}
+        {hasRecorded && !isRecording && (
+          <button className="generate-uml-container"> 
+            <span className="circle-button" onClick={handleGenerateUML}>
+              <span className="circle-arrow"></span>
+            </span>
+            <span className="button-text">Generate UML diagram(s)</span>
+          </button>
+        )}
       </div>
     </div>
   );
