@@ -3,34 +3,33 @@ Modular PlantUML Generator using IBM Granite Code model.
 Generates UML diagrams from meeting transcripts using AI with enhanced error handling.
 """
 import os
-from langchain_community.llms import Replicate
+import replicate
 from plantuml_utils import generate_plantuml_with_error_handling, PlantUMLProcessor, create_error_handler
+from dotenv import load_dotenv
 
 class GranitePlantUMLGenerator:
     def __init__(self):
         """Initialize the Granite Code LLM for PlantUML generation with enhanced error handling"""
-        self.replicate_token = os.getenv("REPLICATE_API_TOKEN")
-        if not self.replicate_token:
+        load_dotenv()
+        REPLICATE_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+        if not REPLICATE_TOKEN:
             raise ValueError("REPLICATE_API_TOKEN environment variable is not set")
         
-        self.llm = Replicate(
-            model="ibm-granite/granite-3.3-8b-instruct",
-            replicate_api_token=self.replicate_token,
-            model_kwargs={
-                "temperature": 0.1,
-                "max_tokens": 2000,
-                "top_p": 0.9
-            }
-        )
+        # store the client 
+        self.replicate_client = replicate.Client(api_token=REPLICATE_TOKEN)
         
         # Initialize the enhanced processor
         self.processor = PlantUMLProcessor()
         self.error_handler = create_error_handler()
     
     def _ai_generate_func(self, prompt: str) -> str:
-        """Internal function to call the AI model with a prompt"""
-        return self.llm.invoke(prompt)
-    
+        """Internal function to call the Granite Code model with a prompt"""
+        output = self.replicate_client.run(
+            "ibm-granite/granite-3.3-8b-instruct", 
+            input={"prompt": prompt}
+        )
+        return ''.join(output)
+
     def generate_plantuml(self, transcript, diagram_type, keywords=None, summary=""):
         """
         Generate PlantUML syntax using enhanced error handling and processing.
