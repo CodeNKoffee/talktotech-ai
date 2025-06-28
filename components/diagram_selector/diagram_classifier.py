@@ -70,7 +70,7 @@ Do not include an "id" or the full transcript – those will be added by the cal
       "prompt": prompt,
       "temperature": 0.3,
       "max_tokens": 400,
-      "top_p": 0.9,
+      "top_p": 0.9,   # High top_p to ensure the model is not too conservative meaning it will creates a larger shortlist of potential words. The output can be more creative and diverse because the model has more "good" options to choose from. It's a safe value that prevents the model from getting stuck while still ensuring relevance. While a low top_p (like 0.2): This creates a very small, exclusive shortlist of only the most likely words. The output will be much more predictable, safe, and often repetitive.
     },
   )
   
