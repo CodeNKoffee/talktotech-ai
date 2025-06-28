@@ -24,7 +24,10 @@ def maybe_generate_real_code(generator, meeting, result):
     if diagram_type in ["UML Class Diagram", "ER Diagram"]:
         print("\n🛠️ Generating real code from PlantUML...")
         code_generator = GraniteCodeGenerator()
-        code_result = code_generator.generate_real_code_from_plantuml(result['plantuml_code'])
+        code_result = code_generator.generate_real_code_from_plantuml(
+            result['plantuml_code'], 
+            diagram_type
+        )
 
         if code_result["success"]:
             print(f"\n===== GENERATED {code_result['language'].upper()} CODE =====\n")

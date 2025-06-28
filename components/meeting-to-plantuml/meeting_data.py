@@ -153,6 +153,54 @@ SAMPLE_MEETINGS = [
         """,
         "output_diagram": "Use Case Diagram", 
         "keywords": ["education", "LMS", "roles", "courses", "assignments", "certification"]
+    },
+    {
+        "id": "meeting_011",
+        "title": "E-commerce Database Design",
+        "transcript": """
+        We need to design the database schema for our e-commerce platform. The Customer entity 
+        should have a unique customer ID as primary key, along with first name, last name, email, 
+        phone number, and registration date. Each customer can have multiple addresses for billing 
+        and shipping. The Product entity contains product ID, name, description, price, category, 
+        and stock quantity. We need an Order entity with order ID, order date, total amount, and 
+        status. Each order belongs to one customer but can contain multiple products through an 
+        OrderItem entity that stores quantity and unit price. We also discussed the Category entity 
+        for organizing products, and a Review entity where customers can rate and comment on products.
+        """,
+        "output_diagram": "ER Diagram",
+        "keywords": ["database", "schema", "entities", "relationships", "e-commerce", "primary keys"]
+    },
+    {
+        "id": "meeting_012", 
+        "title": "University Student Information System Database",
+        "transcript": """
+        The university database needs to track students, courses, and enrollments. The Student entity 
+        has student ID as primary key, first name, last name, date of birth, email, phone, and 
+        enrollment date. Students belong to departments and have academic advisors. The Course entity 
+        includes course code, title, credits, description, and prerequisites. Courses are offered by 
+        departments and taught by instructors. The Enrollment entity represents the many-to-many 
+        relationship between students and courses, storing enrollment date, grade, and semester. 
+        We also need Faculty entity with faculty ID, name, title, department, and hire date. 
+        The Department entity manages both students and faculty with department code, name, and building location.
+        """,
+        "output_diagram": "ER Diagram", 
+        "keywords": ["university", "academic", "students", "courses", "enrollment", "faculty"]
+    },
+    {
+        "id": "meeting_013",
+        "title": "Library Management System Database",
+        "transcript": """
+        Our library system requires several interconnected entities. The Member entity stores member ID, 
+        name, address, phone, email, and membership type (student, faculty, public). The Book entity 
+        contains ISBN as primary key, title, author, publisher, publication year, genre, and total copies. 
+        We track individual book copies with a BookCopy entity that has copy ID, acquisition date, and 
+        condition status. The Loan entity represents when members borrow books, storing loan date, 
+        due date, return date, and any late fees. Authors can write multiple books, so we need an 
+        Author entity with author ID, name, birth date, and nationality. Publishers also need their 
+        own entity with publisher ID, company name, address, and contact information.
+        """,
+        "output_diagram": "ER Diagram",
+        "keywords": ["library", "books", "loans", "members", "authors", "publishers"]
     }
 ]
 

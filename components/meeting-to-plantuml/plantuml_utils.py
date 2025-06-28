@@ -152,6 +152,7 @@ class PlantUMLProcessor:
         output = self._fix_activity_diagram_issues(output)
         output = self._fix_component_diagram_issues(output)
         output = self._fix_usecase_diagram_issues(output)
+        output = self._fix_erd_diagram_issues(output)
         
         # Add styling if not present
         output = self._add_styling(output)
@@ -163,6 +164,10 @@ class PlantUMLProcessor:
     
     def _extract_plantuml_block(self, output: str) -> str:
         """Extract the PlantUML block from potentially messy output."""
+        # Check if it's a Chen ERD diagram
+        if '@startchen' in output.lower():
+            return self._extract_chen_block(output)
+        
         # Find @startuml
         start_match = re.search(r'@startuml', output, re.IGNORECASE)
         if start_match:
@@ -175,6 +180,23 @@ class PlantUMLProcessor:
         elif '@startuml' in output.lower() and '@enduml' not in output.lower():
             # Add missing @enduml
             output += '\n@enduml'
+        
+        return output
+    
+    def _extract_chen_block(self, output: str) -> str:
+        """Extract the Chen ERD block from potentially messy output."""
+        # Find @startchen
+        start_match = re.search(r'@startchen', output, re.IGNORECASE)
+        if start_match:
+            output = output[start_match.start():]
+        
+        # Find @endchen
+        end_match = re.search(r'@endchen', output, re.IGNORECASE)
+        if end_match:
+            output = output[:end_match.end()]
+        elif '@startchen' in output.lower() and '@endchen' not in output.lower():
+            # Add missing @endchen
+            output += '\n@endchen'
         
         return output
     
@@ -264,8 +286,50 @@ class PlantUMLProcessor:
         
         return output
     
+    def _fix_erd_diagram_issues(self, output: str) -> str:
+        """Fix common ERD (Chen's notation) syntax issues."""
+        # Skip if not an ERD
+        if '@startchen' not in output.lower():
+            return output
+        
+        # Remove any UML contamination in ERD
+        output = re.sub(r'@startuml[^\n]*\n', '', output, flags=re.IGNORECASE)
+        output = re.sub(r'@enduml', '', output, flags=re.IGNORECASE)
+        output = re.sub(r'skinparam[^\n]*\n', '', output, flags=re.IGNORECASE)
+        
+        # Replace class with entity
+        output = re.sub(r'\bclass\s+(\w+)', r'entity \1', output, flags=re.IGNORECASE)
+        
+        # Remove visibility modifiers (-, +, #) 
+        output = re.sub(r'^(\s*)[-+#](\w+\s*:', r'\1\2', output, flags=re.MULTILINE)
+        output = re.sub(r'\n(\s*)[-+#](\w+\s*:', r'\n\1\2', output)
+        
+        # Fix entity declarations
+        output = re.sub(r'entity\s+(\w+)\s*{\s*{', r'entity \1 {', output)
+        
+        # Fix attribute syntax - ensure proper TYPE format
+        output = re.sub(r'(\w+)\s*:\s*([A-Z][a-z]+)', r'\1 : \2', output)
+        output = re.sub(r'(\w+)\s*:\s*([a-z][a-z]*)', lambda m: f'{m.group(1)} : {m.group(2).upper()}', output)
+        
+        # Fix relationship connections - ensure proper Chen notation
+        output = re.sub(r'(\w+)\s+"1"\s*--\s*"\*"\s*(\w+)', r'\1 -1- \2', output)
+        output = re.sub(r'(\w+)\s*-->\s*(\w+)', r'\1 -N- \2', output)
+        output = re.sub(r'(\w+)\s*--\|>\s*(\w+)', r'\1 -1- \2', output)
+        
+        # Remove method definitions with ()
+        output = re.sub(r'\s*\w+\s*\([^)]*\)\s*:[^}]*', '', output)
+        
+        # Ensure Chen notation cardinality
+        output = re.sub(r'(\w+)\s+(\w+)\s*:\s*(\w+)', r'\1 -1- \2 -N- \3', output)
+        
+        return output
+    
     def _add_styling(self, output: str) -> str:
         """Add consistent styling to the diagram."""
+        # Skip styling for Chen ERD diagrams
+        if '@startchen' in output.lower():
+            return output
+        
         styling = """skinparam monochrome true
 skinparam shadowing false
 skinparam classAttributeIconSize 0
@@ -306,11 +370,18 @@ skinparam style strictuml"""
             return False, errors
         
         # Basic structure validation
-        if '@startuml' not in code.lower():
-            errors.append("Missing @startuml directive")
+        is_chen_diagram = '@startchen' in code.lower()
         
-        if '@enduml' not in code.lower():
-            errors.append("Missing @enduml directive")
+        if is_chen_diagram:
+            if '@startchen' not in code.lower():
+                errors.append("Missing @startchen directive")
+            if '@endchen' not in code.lower():
+                errors.append("Missing @endchen directive")
+        else:
+            if '@startuml' not in code.lower():
+                errors.append("Missing @startuml directive")
+            if '@enduml' not in code.lower():
+                errors.append("Missing @enduml directive")
         
         # Diagram-specific validation
         if diagram_type:
@@ -352,6 +423,14 @@ skinparam style strictuml"""
         elif 'Use Case Diagram' in diagram_type:
             if not re.search(r'actor\s+|\(.*\)', code):
                 errors.append("Use case diagram should contain actors or use cases")
+        
+        elif 'ER Diagram' in diagram_type:
+            if not re.search(r'@startchen', code):
+                errors.append("ER diagram should use @startchen")
+            if not re.search(r'entity\s+\w+', code):
+                errors.append("ER diagram should contain entity definitions")
+            if re.search(r'@startuml|class\s+\w+|[-+#]\w+:', code):
+                errors.append("ER diagram contains UML syntax - should only use Chen's notation")
         
         return errors
     
@@ -549,7 +628,46 @@ User --> ViewReports
 Admin --> ManageSys
 
 note right of User : {context[:50] + "..." if len(context) > 50 else context}
-@enduml"""
+@enduml""",
+
+            "ER Diagram": f"""@startchen
+
+entity CUSTOMER {{
+  CustomerID : INTEGER <<key>>
+  Name {{
+    FirstName : STRING
+    LastName : STRING
+  }}
+  Email : STRING
+  Phone : STRING
+}}
+
+entity ORDER {{
+  OrderID : INTEGER <<key>>
+  OrderDate : DATE
+  TotalAmount : DECIMAL
+}}
+
+entity PRODUCT {{
+  ProductID : INTEGER <<key>>
+  ProductName : STRING
+  Price : DECIMAL
+}}
+
+relationship PLACES {{
+}}
+
+relationship CONTAINS {{
+  Quantity : INTEGER
+  UnitPrice : DECIMAL
+}}
+
+CUSTOMER -1- PLACES
+PLACES -N- ORDER
+ORDER -1- CONTAINS
+CONTAINS -N- PRODUCT
+
+@endchen"""
         }
         
         return fallback_templates.get(diagram_type, f"""@startuml

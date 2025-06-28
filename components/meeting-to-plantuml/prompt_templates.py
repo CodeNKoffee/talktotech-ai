@@ -291,6 +291,83 @@ REQUIREMENTS:
 - Add one note with keywords reference
 
 Generate ONLY the PlantUML code. No explanations.
+""",
+
+    "ER Diagram": """
+You are a PlantUML expert creating Chen's Entity Relationship notation. 
+
+CRITICAL: This is NOT a class diagram. Do NOT use class diagram syntax.
+
+INPUT DATA:
+- Transcript: "{transcript}"
+- Summary: "{summary}"
+- Keywords: {keywords}
+
+MANDATORY RULES - FOLLOW EXACTLY:
+1. ONLY use @startchen and @endchen tags
+2. NEVER use @startuml, @enduml, skinparam, or any UML syntax
+3. NEVER use the word "class" - ONLY use "entity"
+4. NEVER use visibility modifiers: -, +, #
+5. NEVER use inheritance syntax: --|>, -|>, etc.
+6. NEVER use method definitions with ()
+
+CHEN'S NOTATION SYNTAX:
+- Entity: entity ENTITYNAME {{ attributes }}
+- Relationship: relationship RELATIONSHIPNAME {{ attributes }}
+- Attributes: AttributeName : TYPE <<modifier>>
+- Primary key: AttributeName : TYPE <<key>>
+- Composite: AttributeName {{ SubAttr1 : TYPE SubAttr2 : TYPE }}
+
+CARDINALITY SYNTAX:
+- One-to-One: Entity1 -1- Relationship -1- Entity2
+- One-to-Many: Entity1 -1- Relationship -N- Entity2
+- Many-to-Many: Entity1 -N- Relationship -N- Entity2
+
+CORRECT CHEN'S NOTATION EXAMPLE:
+@startchen
+
+entity CUSTOMER {{
+  CustomerID : INTEGER <<key>>
+  Name {{
+    FirstName : STRING
+    LastName : STRING
+  }}
+  Email : STRING
+  Phone : STRING
+}}
+
+entity ORDER {{
+  OrderID : INTEGER <<key>>
+  OrderDate : DATE
+  TotalAmount : DECIMAL
+}}
+
+relationship PLACES {{
+}}
+
+CUSTOMER -1- PLACES
+PLACES -N- ORDER
+
+@endchen
+
+ABSOLUTELY FORBIDDEN:
+❌ @startuml / @enduml
+❌ skinparam statements
+❌ class keyword
+❌ Visibility: -, +, #
+❌ Methods with ()
+❌ Inheritance: --|>
+❌ UML associations: -->
+
+REQUIREMENTS:
+- Start with @startchen only
+- Use entity keyword for all entities
+- NO visibility modifiers
+- Use proper Chen cardinality notation
+- End with @endchen only
+- Generate 3-5 entities from transcript
+
+Generate ONLY Chen's notation ERD code. No UML syntax allowed.
 """
 }
 
@@ -359,6 +436,24 @@ DIAGRAM_VALIDATION_PATTERNS = {
             r"class\s+\w+",
             r"participant\s+",
             r"start\s*$"
+        ]
+    },
+    "ER Diagram": {
+        "required_patterns": [
+            r"entity\s+\w+\s*\{",
+            r"@startchen",
+            r"@endchen"
+        ],
+        "forbidden_patterns": [
+            r"@startuml",
+            r"@enduml", 
+            r"skinparam",
+            r"class\s+\w+",
+            r"participant\s+",
+            r"actor\s+",
+            r"[+-#]\w+\s*:",
+            r"--\|>",
+            r"\w+\s*\(\s*\)"
         ]
     }
 }
