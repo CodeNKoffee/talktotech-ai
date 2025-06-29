@@ -211,3 +211,11 @@ SOFTWARE.
 ---
 
 *Developed for IBM AI & Automation Unpacked Hackathon at IBM TechXchange 2025*
+
+## 👀 Preview
+
+Here's a glimpse of the TalkToTech user interface in action:
+
+| Audio Recording & Session Summary | Diagram & Code Generation |
+|:---------------------------------:|:------------------------:|
+| ![Recording and Summary UI](assets/TalkToTech-IMG1.jpg) | ![Diagram and Code UI](assets/TalkToTech-IMG2.jpg) |
