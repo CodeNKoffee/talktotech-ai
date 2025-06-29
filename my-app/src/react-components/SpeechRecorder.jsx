@@ -13,6 +13,13 @@ const SpeechRecorder = () => {
   const [summary, setSummary] = useState("");
   const [outputDiagram, setOutputDiagram] = useState("");
   const [keywords, setKeywords] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({
+    title: false,
+    summary: false,
+    keywords: false,
+    outputDiagram: false
+  });
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
@@ -46,7 +53,17 @@ const SpeechRecorder = () => {
 
     mediaRecorderRef.current.onstop = async () => {
       setIsRecording(false);
+      setIsProcessing(true);
       setStatus("Uploading and processing...");
+      
+      // Set all fields to loading state
+      setLoadingStates({
+        title: true,
+        summary: true,
+        keywords: true,
+        outputDiagram: true
+      });
+
       const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.wav");
@@ -58,20 +75,54 @@ const SpeechRecorder = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setTitle(data.title || "");
-          setSummary(data.summary || "");
-          setOutputDiagram(Array.isArray(data.output_diagram) ? data.output_diagram.join(', ') : (data.output_diagram || ""));
-          setKeywords(Array.isArray(data.keywords) ? data.keywords.join(', ') : (data.keywords || ""));
+          
+          // Simulate progressive loading of each field
+          // In real implementation, this would come from backend streaming/webhooks
+          setTimeout(() => {
+            setTitle(data.title || "");
+            setLoadingStates(prev => ({ ...prev, title: false }));
+          }, 500);
+          
+          setTimeout(() => {
+            setSummary(data.summary || "");
+            setLoadingStates(prev => ({ ...prev, summary: false }));
+          }, 1000);
+          
+          setTimeout(() => {
+            setKeywords(Array.isArray(data.keywords) ? data.keywords.join(', ') : (data.keywords || ""));
+            setLoadingStates(prev => ({ ...prev, keywords: false }));
+          }, 1500);
+          
+          setTimeout(() => {
+            setOutputDiagram(Array.isArray(data.output_diagram) ? data.output_diagram.join(', ') : (data.output_diagram || ""));
+            setLoadingStates(prev => ({ ...prev, outputDiagram: false }));
+            setIsProcessing(false);
+          }, 2000);
+
           setStatus("Recording complete!");
           setHasRecorded(true);
         } else {
           setStatus("Error during processing.");
           setHasRecorded(true);
+          setIsProcessing(false);
+          setLoadingStates({
+            title: false,
+            summary: false,
+            keywords: false,
+            outputDiagram: false
+          });
         }
       } catch (error) {
         console.error(error);
         setStatus("Network error.");
         setHasRecorded(true);
+        setIsProcessing(false);
+        setLoadingStates({
+          title: false,
+          summary: false,
+          keywords: false,
+          outputDiagram: false
+        });
       }
     };
 
@@ -103,9 +154,20 @@ const SpeechRecorder = () => {
       stopRecording();
       setHasRecorded(true);
     } else {
-      // Starting recording
+      // Starting recording - reset states
       startRecording();
       setHasRecorded(false);
+      setIsProcessing(false);
+      setTitle("");
+      setSummary("");
+      setKeywords([]);
+      setOutputDiagram("");
+      setLoadingStates({
+        title: false,
+        summary: false,
+        keywords: false,
+        outputDiagram: false
+      });
     }
   };
 
@@ -122,6 +184,58 @@ const SpeechRecorder = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Loading skeleton component
+  const LoadingSkeleton = ({ width = '100%', height = '20px', className = '' }) => (
+    <div 
+      className={`loading-skeleton ${className}`}
+      style={{ width, height }}
+    />
+  );
+
+  // Format summary text to separate sections
+  const formatSummaryText = (text) => {
+    if (!text) return text;
+    
+    // Split by **Section Name**: pattern
+    const sections = text.split(/(?=- \*\*[^*]+\*\*:)/);
+    
+    return (
+      <div className="formatted-summary-content">
+        {sections.map((section, index) => {
+          if (!section.trim()) return null;
+          
+          // Extract section header
+          const headerMatch = section.match(/- \*\*([^*]+)\*\*:/);
+          if (!headerMatch) return null;
+          
+          const sectionTitle = headerMatch[1].trim();
+          const content = section.replace(headerMatch[0], '').trim();
+          
+          // Split content by bullet points (- )
+          const bulletPoints = content.split(/(?=\s*-\s+)/).filter(point => point.trim());
+          
+          return (
+            <div key={index} className="summary-section">
+              <div className="summary-section-header">{sectionTitle}</div>
+              <div className="summary-bullets-container">
+                {bulletPoints.map((point, pointIndex) => {
+                  const cleanPoint = point.replace(/^\s*-\s*/, '').trim();
+                  if (!cleanPoint) return null;
+                  
+                  return (
+                    <div key={pointIndex} className="summary-bullet">
+                      • {cleanPoint}
+                    </div>
+                  );
+                }).filter(Boolean)}
+              </div>
+            </div>
+          );
+        }).filter(Boolean)}
+      </div>
+    );
   };
 
   return (
@@ -155,19 +269,44 @@ const SpeechRecorder = () => {
             </div>
             <div className="summary-item">
               <span className="summary-label">Title:</span>
-              <span className="summary-value">{hasRecorded ? title : 'N/A'}</span>
+              {loadingStates.title ? (
+                <LoadingSkeleton width="180px" height="16px" />
+              ) : (
+                <span className="summary-value">{hasRecorded ? title : 'N/A'}</span>
+              )}
             </div>
             <div className="summary-item">
               <span className="summary-label">Summary:</span>
-              <span className="summary-value">{hasRecorded ? summary : 'N/A'}</span>
+              {loadingStates.summary ? (
+                <div className="summary-skeleton-container">
+                  <LoadingSkeleton width="100%" height="16px" />
+                  <LoadingSkeleton width="80%" height="16px" />
+                  <LoadingSkeleton width="90%" height="16px" />
+                </div>
+              ) : (
+                <div className="summary-value formatted-summary">
+                  {hasRecorded ? formatSummaryText(summary) : 'N/A'}
+                </div>
+              )}
             </div>
             <div className="summary-item">
               <span className="summary-label">Keywords:</span>
-              <span className="summary-value">{hasRecorded ? keywords : 'N/A'}</span>
+              {loadingStates.keywords ? (
+                <div className="summary-skeleton-container">
+                  <LoadingSkeleton width="120px" height="16px" />
+                  <LoadingSkeleton width="100px" height="16px" />
+                </div>
+              ) : (
+                <span className="summary-value">{hasRecorded ? keywords : 'N/A'}</span>
+              )}
             </div>
             <div className="summary-item">
               <span className="summary-label">Output Diagrams:</span>
-              <span className="summary-value">{hasRecorded ? outputDiagram : 'N/A'}</span>
+              {loadingStates.outputDiagram ? (
+                <LoadingSkeleton width="150px" height="16px" />
+              ) : (
+                <span className="summary-value">{hasRecorded ? outputDiagram : 'N/A'}</span>
+              )}
             </div>
           </div>
         </div>
@@ -245,11 +384,11 @@ const SpeechRecorder = () => {
         
         {/* Instruction text */}
         <p className="instruction-text">
-          {status || (isRecording ? 'Listening...' : hasRecorded ? 'Recording complete!' : 'Click to start recording')}
+          {status || (isRecording ? 'Listening...' : isProcessing ? 'Processing your recording...' : hasRecorded ? 'Recording complete!' : 'Click to start recording')}
         </p>
 
         {/* Generate UML Button   btn , circle, arrow, text */}
-        {hasRecorded && !isRecording && (
+        {hasRecorded && !isRecording && !isProcessing && (
           <button className="generate-uml-container"> 
             <span className="circle-button" onClick={handleGenerateUML}>
               <span className="circle-arrow"></span>
