@@ -13,8 +13,8 @@ const PDFSVGPanel = ({ diagramType, link }) => {
             src={link}
             alt={link} 
             className="diagram-preview"
-            height={400}
-            width={400}
+            height={600}
+            width={600}
           />
           <p className="placeholder-text">
             </p>

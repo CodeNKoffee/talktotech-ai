@@ -9,6 +9,7 @@ const SpeechRecorder = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasRecorded, setHasRecorded] = useState(false);
   const [status, setStatus] = useState("");
+  const [buttonText, setButtonText] = useState("Generate UML Diagram(s)");
   const [showSummary, setShowSummary] = useState(false);
   const [finalRecordingTime, setFinalRecordingTime] = useState(0);
   const [title, setTitle] = useState("");
@@ -152,6 +153,7 @@ const SpeechRecorder = () => {
   };
 
   const handleCLick2 = async () => {
+    setButtonText("Generating...");
     const formData = new FormData();
     formData.append("meeting", JSON.stringify(meeting));
     const response2 = await fetch("http://127.0.0.1:5000/generate", {
@@ -160,6 +162,8 @@ const SpeechRecorder = () => {
     });
     const data = await response2.json();
     setDiagrams(data.diagrams)
+    setButtonText("View PlantUML Display");
+
   }
 
   const handleRecordClick = () => {
@@ -435,13 +439,12 @@ const SpeechRecorder = () => {
         {/* Generate UML Button   btn , circle, arrow, text */}
         {hasRecorded && !isRecording && !isProcessing && (
           <>
-          <button className="generate-uml-container" onClick={handleCLick2}> 
+          <button className="generate-uml-container" onClick={buttonText=="Generate UML Diagram(s)" ? handleCLick2 : handleGenerateUML} disabled={buttonText=="Generating..."}> 
             <span className="circle-button" >
               <span className="circle-arrow"></span>
             </span>
-            <span className="button-text">Generate UML diagram(s)</span>
+            <span className="button-text">{buttonText}</span>
           </button>
-          <button onClick={handleGenerateUML}>GO TO PAGE</button>
           </>
         )}
       </div>
