@@ -26,7 +26,7 @@ class GraniteCodeGenerator:
     def generate_real_code_from_plantuml(self, plantuml_code: str, diagram_type: str = None) -> dict:
         """
         Analyze PlantUML code and generate either:
-        - Java classes (for UML class diagrams), or
+        - Java classes (for class diagrams), or
         - SQL tables (for ER diagrams)
 
         Args:
@@ -40,7 +40,7 @@ class GraniteCodeGenerator:
         if diagram_type == "ER Diagram":
             prompt = self._get_erd_to_sql_prompt(plantuml_code)
             expected_language = "sql"
-        elif diagram_type == "UML Class Diagram":
+        elif diagram_type == "Class Diagram":
             prompt = self._get_class_to_java_prompt(plantuml_code)
             expected_language = "java"
         else:
