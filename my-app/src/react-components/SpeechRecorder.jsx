@@ -219,7 +219,7 @@ const SpeechRecorder = () => {
           return (
             <div key={index} className="summary-section">
               <div className="summary-section-header">{sectionTitle}</div>
-              <div className="summary-content">
+              <div className="summary-bullets-container">
                 {bulletPoints.map((point, pointIndex) => {
                   const cleanPoint = point.replace(/^\s*-\s*/, '').trim();
                   if (!cleanPoint) return null;

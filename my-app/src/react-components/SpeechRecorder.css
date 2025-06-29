@@ -487,7 +487,13 @@ body {
 .summary-content {
   margin-top: 8px;
   text-align: left;
-  padding:15px;
+  padding: 15px;
+}
+
+.summary-bullets-container {
+  margin-top: 8px;
+  text-align: left;
+  padding: 0;
 }
 
 .summary-bullet {
