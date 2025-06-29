@@ -81,21 +81,25 @@ PLANTUML RULES:
      +method(): ReturnType
    }}
 
-4. Use only these relationships:
-   - Inheritance:     Child <|-- Parent
+4. Use only these relationships in ONLY this syntax:
+   - Inheritance:     Child --|> Parent
    - Interface Impl:  Class <|.. Interface
    - Composition:     Whole *-- Part
    - Aggregation:     Whole o-- Part
    - Dependency:      Class --> Other
-   - Cardinality:     Class1 "1" *-- "many" Class2 : label
-   → Always wrap cardinality numbers in double quotes: "1", "many"
+   - Cardinality:     Class1 "1" *-- "*" Class2 : label
+   → These relations should be written seperately on their own lines after the involved classes have been written
+   → Always wrap cardinality numbers in double quotes: "1", "*"
    → Always write the name of the relationship at the end and after a colon
-   example: ClassA "1" *-- "many" ClassB : contains
+   example1: ClassA "1..*" *-- "*" ClassB : contains
+   example2: if Cat inherits from Animal then you should add a line "Cat --|> Animal"
    FOLLOW THIS EXACT SYNTAX
 
 5. STRUCTURE:
    - First: All class and interface definitions
    - Then: All relationships (after all classes)
+   -ORDER MUST BE MAINTAINED 
+   -You should pretend relations dont exist until all classes are written. Only then shall the raltions be written in the correct exact syntax above.
 
 REQUIREMENTS:
 - Use correct visibility: + public, - private, # protected

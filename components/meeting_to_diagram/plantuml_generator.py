@@ -31,7 +31,7 @@ class GranitePlantUMLGenerator:
         output = self.replicate_client.run(
             "ibm-granite/granite-3.3-8b-instruct", 
             input={"prompt": prompt},
-            temperature=0.0
+            temperature=0.05
         )
         return ''.join(output)
     

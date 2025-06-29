@@ -4,6 +4,7 @@ import replicate
 import os
 import sys
 import json
+from plantuml import PlantUML
 
 # Import the modularized functions
 from summarizer import summarize_transcript
@@ -132,18 +133,25 @@ def generate():
           diagram_result["plantuml_code"] = result['plantuml_code']
           diagram_result["plantuml_status"] = "success"
           print(f"✅ {diagram_type} PlantUML generated successfully")
+          print(result['plantuml_code'])
           
           # 5. Generate SVG for this diagram
           if result['plantuml_code']:
             print(f"� Generating SVG for {diagram_type}...")
             svg_result = svg_converter.convert_to_svg(result['plantuml_code'])
+            server = PlantUML(url="http://www.plantuml.com/plantuml/img/")
+
+            # This fetches the image URL for rendering
+            svg_url = server.get_url(result['plantuml_code'])
+            print("SVG URL:", svg_url)
+            diagram_result["svg_file"] = svg_url
             
-            if svg_result and svg_result.get('success'):
-              diagram_result["svg_content"] = svg_result.get('svg_content')
-              diagram_result["svg_file"] = svg_result.get('output_file')
-              print(f"✅ {diagram_type} SVG generated successfully")
-            else:
-              print(f"⚠️ {diagram_type} SVG generation failed")
+            # if svg_result and svg_result.get('success'):
+            #   diagram_result["svg_content"] = svg_result.get('svg_content')
+            #   diagram_result["svg_file"] = svg_result.get('output_file')
+            #   print(f"✅ {diagram_type} SVG generated successfully")
+            # else:
+            #   print(f"⚠️ {diagram_type} SVG generation failed")
           
           # 6. Generate Real Code (if applicable)
           code_supported_types = ["Class Diagram", "ER Diagram"]
