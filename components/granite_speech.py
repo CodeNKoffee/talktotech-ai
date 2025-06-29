@@ -3,12 +3,15 @@ from flask_cors import CORS, cross_origin
 import replicate
 import os
 import sys
+import json
+from plantuml import PlantUML
 
 # Import the modularized functions
 from summarizer import summarize_transcript
 from transcriber import transcribe_audio
 from diagram_selector.diagram_classifier import analyze_meeting
 
+meeting = None
 app = Flask(__name__)
 # Development wildcard CORS - allows all origins (easiest for dev)
 CORS(app, origins="*", allow_headers="*", methods="*")
@@ -28,7 +31,6 @@ def index():
 @app.route("/upload", methods=["POST"])
 @cross_origin()
 def upload():
-  try:
     # 1. Save and transcribe the uploaded audio file
     audio_file = request.files["audio"]
     audio_path = os.path.join("recording.wav")
@@ -40,11 +42,29 @@ def upload():
 
     # 3. Analyze for Diagram Type and Title (from updated module)
     meeting_data = analyze_meeting(transcript_text)
+    meeting = meeting_data
     print(f"✅ Meeting analyzed - Suggested diagrams: {', '.join(meeting_data.get('output_diagram', []))}")
 
     # 4. Generate PlantUML Code for All Suggested Diagrams
-    print("🛠️ Step 4: Generating PlantUML code for all suggested diagrams...")
     
+    return jsonify({
+      "success": True,
+      "transcript": transcript_text,
+      "summary": summary_text,
+      "title": meeting_data['title'],
+      "output_diagram": meeting_data['output_diagram'],
+      "keywords": meeting_data['keywords']
+    }), 200
+
+
+
+@app.route("/generate", methods=["POST"])
+@cross_origin()
+def generate():
+
+    meeting_json = request.form.get("meeting")
+    meeting_data = json.loads(meeting_json)
+    print("🛠️ Step 4: Generating PlantUML code for all suggested diagrams...")
     # Get all suggested diagram types
     diagram_types = meeting_data.get("output_diagram", [])
     if not isinstance(diagram_types, list):
@@ -88,11 +108,8 @@ def upload():
         single_diagram_meeting["output_diagram"] = diagram_type
         
         # Generate PlantUML for this specific diagram type
-        result = generator.generate_plantuml(
-          transcript=meeting_data.get("transcript", transcript_text),
-          diagram_type=diagram_type,
-          keywords=meeting_data.get("keywords", []),
-          summary=summary_text
+        result = generator.generate_from_meeting(
+          meeting_data
         )
         
         diagram_result = {
@@ -104,11 +121,11 @@ def upload():
           "real_code": None,
           "real_code_language": None,
           "generation_details": {
-            "success": result.get("success", False),
-            "is_valid": result.get("is_valid", False),
-            "status_message": result.get("status_message", "Unknown error"),
-            "validation_errors": result.get("validation_errors", []),
-            "revision_attempts": result.get("revision_attempts", 0)
+          "success": result.get("success", False),
+          "is_valid": result.get("is_valid", False),
+          "status_message": result.get("status_message", "Unknown error"),
+          "validation_errors": result.get("validation_errors", []),
+          "revision_attempts": result.get("revision_attempts", 0)
           }
         }
         
@@ -116,18 +133,25 @@ def upload():
           diagram_result["plantuml_code"] = result['plantuml_code']
           diagram_result["plantuml_status"] = "success"
           print(f"✅ {diagram_type} PlantUML generated successfully")
+          print(result['plantuml_code'])
           
           # 5. Generate SVG for this diagram
           if result['plantuml_code']:
             print(f"� Generating SVG for {diagram_type}...")
-            svg_result = svg_converter.convert_to_svg(result['plantuml_code'], f"diagram_{i+1}_{diagram_type.lower().replace(' ', '_')}")
+            svg_result = svg_converter.convert_to_svg(result['plantuml_code'])
+            server = PlantUML(url="http://www.plantuml.com/plantuml/img/")
+
+            # This fetches the image URL for rendering
+            svg_url = server.get_url(result['plantuml_code'])
+            print("SVG URL:", svg_url)
+            diagram_result["svg_file"] = svg_url
             
-            if svg_result and svg_result.get('success'):
-              diagram_result["svg_content"] = svg_result.get('svg_content')
-              diagram_result["svg_file"] = svg_result.get('output_file')
-              print(f"✅ {diagram_type} SVG generated successfully")
-            else:
-              print(f"⚠️ {diagram_type} SVG generation failed")
+            # if svg_result and svg_result.get('success'):
+            #   diagram_result["svg_content"] = svg_result.get('svg_content')
+            #   diagram_result["svg_file"] = svg_result.get('output_file')
+            #   print(f"✅ {diagram_type} SVG generated successfully")
+            # else:
+            #   print(f"⚠️ {diagram_type} SVG generation failed")
           
           # 6. Generate Real Code (if applicable)
           code_supported_types = ["Class Diagram", "ER Diagram"]
@@ -163,14 +187,6 @@ def upload():
 
     # 7. Return results to the frontend
     response_data = {
-      "success": True,
-      "meeting_id": meeting_data.get("id"),
-      "transcript": transcript_text,
-      "summary": summary_text,
-      "title": meeting_data.get("title"),
-      "output_diagram": meeting_data.get("output_diagram"),
-      "keywords": meeting_data.get("keywords"),
-      "overall_status": overall_status,
       "diagrams": all_diagrams,
       "total_diagrams": len(all_diagrams),
       "successful_diagrams": len([d for d in all_diagrams if d['plantuml_status'] == 'success'])
@@ -199,17 +215,6 @@ def upload():
 
     return jsonify(response_data)
 
-  except Exception as e:
-    print(f"❌ Error in upload endpoint: {e}")
-    return jsonify({
-      "success": False,
-      "error": str(e),
-      "transcript": "Error processing audio",
-      "summary": "An error occurred during processing",
-      "title": "Processing Error",
-      "output_diagram": [],
-      "keywords": []
-    }), 500
 
 if __name__ == "__main__":
   app.run(debug=True)

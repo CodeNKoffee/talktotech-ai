@@ -1,0 +1,146 @@
+/* Diagram Tabs Container */
+.diagram-tabs-container {
+  position: fixed;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  z-index: 999;
+}
+
+/* Tab Navigation */
+.diagram-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 30px;
+  padding: 6px;
+  gap: 4px;
+  box-shadow: 
+    0 12px 40px rgba(30, 58, 58, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(135, 206, 235, 0.2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: relative;
+}
+
+.diagram-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Individual Tab */
+.diagram-tab {
+  display: flex;
+  align-items: center;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 25px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  min-width: fit-content;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Tab Hover Effect */
+.diagram-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 58, 58, 0.1);
+}
+
+/* Active Tab */
+.diagram-tab.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: rgba(70, 130, 180, 0.9);
+  font-weight: 600;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(30, 58, 58, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(200, 200, 200, 0.3);
+}
+
+.diagram-tab.active .tab-label {
+  color: rgba(70, 130, 180, 1);
+  transform: scale(1.05);
+}
+
+/* Tab Label */
+.tab-label {
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+}
+
+/* Focus States */
+.diagram-tab:focus,
+.diagram-tab:active {
+  outline: none;
+}
+
+/* Shimmer Effect for Active Tab */
+.diagram-tab.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.6s;
+}
+
+.diagram-tab.active:hover::before {
+  left: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .diagram-tabs-container {
+    top: 25px;
+  }
+  
+  .diagram-tabs {
+    padding: 4px;
+    border-radius: 25px;
+  }
+  
+  .diagram-tab {
+    padding: 12px 18px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .diagram-tabs-container {
+    top: 20px;
+  }
+  
+  .diagram-tab {
+    padding: 10px 16px;
+  }
+  
+  .tab-label {
+    font-size: 12px;
+  }
+}
