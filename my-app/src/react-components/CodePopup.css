@@ -120,6 +120,23 @@
   outline: none;
 }
 
+.copy-button.copied {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: rgba(34, 197, 94, 1);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 
+    0 12px 32px rgba(34, 197, 94, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 0 0 rgba(34, 197, 94, 0.4);
+  animation: copySuccess 0.3s ease-out, copyPulse 2s ease-out;
+}
+
+.copy-button.copied svg {
+  color: rgba(34, 197, 94, 1);
+  filter: drop-shadow(0 2px 4px rgba(34, 197, 94, 0.3));
+}
+
 .copy-button svg, .close-button svg {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
@@ -201,6 +218,39 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes copySuccess {
+  0% {
+    transform: translateY(-2px) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.1);
+  }
+  100% {
+    transform: translateY(-2px) scale(1.05);
+  }
+}
+
+@keyframes copyPulse {
+  0% {
+    box-shadow: 
+      0 12px 32px rgba(34, 197, 94, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  70% {
+    box-shadow: 
+      0 12px 32px rgba(34, 197, 94, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      0 0 0 10px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 
+      0 12px 32px rgba(34, 197, 94, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      0 0 0 0 rgba(34, 197, 94, 0);
   }
 }
 
