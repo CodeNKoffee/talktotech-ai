@@ -29,7 +29,8 @@ class GranitePlantUMLGenerator:
         """Internal function to call the Granite Code model with a prompt"""
         output = self.replicate_client.run(
             "ibm-granite/granite-3.3-8b-instruct", 
-            input={"prompt": prompt}
+            input={"prompt": prompt},
+            temperature=0.0
         )
         return ''.join(output)
     

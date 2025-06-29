@@ -97,7 +97,7 @@ class GraniteCodeGenerator:
                 input={
                     "prompt": prompt,
                     "max_tokens": 4000,      # Allows for substantial code generation
-                    "temperature": 0.1,      # Low randomness for consistent code
+                    "temperature": 0.0,      # consistent code
                     "top_p": 0.9            # Focus on most likely tokens
                 }
             )

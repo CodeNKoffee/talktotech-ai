@@ -48,8 +48,8 @@ def upload():
   # 4. Generate PlantUML Code
   print("🛠️ Step 4: Generating PlantUML code...")
   try:
-    # Add paths for meeting-to-plantuml components
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting-to-plantuml'))
+    # Add paths for meeting-to-diagram components
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting-to-diagram'))
     from plantuml_generator import GranitePlantUMLGenerator
     
     # Initialize PlantUML generator
@@ -71,7 +71,7 @@ def upload():
     svg_result = None
     if plantuml_code:
       print("📊 Step 5: Generating SVG diagram...")
-      sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting-to-plantuml'))
+      sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting-to-diagram'))
       from svg_converter import SVGConverter
 
       # Initialize SVG converter

@@ -24,7 +24,6 @@ import os
 import sys
 import json
 import traceback
-from datetime import datetime
 
 # Add current directory to path for imports
 sys.path.append(os.path.dirname(__file__))
@@ -138,8 +137,8 @@ def test_plantuml_generation(meeting_data):
         return None
     
     try:
-        # Add paths for meeting-to-plantuml components
-        sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting-to-plantuml'))
+        # Add paths for meeting-to-diagram components
+        sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting-to-diagram'))
         
         from plantuml_generator import GranitePlantUMLGenerator
         
@@ -166,10 +165,10 @@ def test_svg_generation(plantuml_code, title="Test Meeting Diagram"):
         print_result(False, "No PlantUML code available for SVG generation")
         return None
     
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting-to-plantuml'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting-to-diagram'))
     from svg_converter import SVGConverter
 
-    print(f"\n📊 Generating SVG diagram for: {meeting_title}")
+    print(f"\n📊 Generating SVG diagram for: {title}")
     
     # Initialize SVG converter
     svg_converter = SVGConverter()
@@ -248,7 +247,6 @@ def test_real_code_generation(plantuml_code, diagram_types):
 def main():
     """Main test function"""
     print("🚀 TalkToTech AI Backend Flow Test")
-    print(f"📅 Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"📂 Working directory: {os.getcwd()}")
     
     # Test results storage
@@ -302,10 +300,7 @@ def main():
     
     success_count = sum(1 for result in results.values() if result is not None)
     total_steps = len(results)
-    
-    print(f"✅ Successful steps: {success_count}/{total_steps}")
-    print(f"❌ Failed steps: {total_steps - success_count}/{total_steps}")
-    
+        
     for step, result in results.items():
         status = "✅" if result is not None else "❌"
         print(f"{status} {step.replace('_', ' ').title()}")
@@ -317,7 +312,6 @@ def main():
     else:
         print("\n❌ ALL TESTS FAILED! Please check your configuration and dependencies.")
     
-    print(f"\n📅 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 if __name__ == "__main__":
     main()
