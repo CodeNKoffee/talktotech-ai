@@ -5,10 +5,12 @@ import SummaryButton from './SummaryButton';
 import GenerateCodeButton from './GenerateCodeButton';
 import PlantUMLCodePanel from './PlantUMLCodePanel';
 import PDFSVGPanel from './PDFSVGPanel';
+import CodePopup from './CodePopup';
 
 const PlantUMLDisplay = () => {
   const location = useLocation();
   const [showSummary, setShowSummary] = useState(false);
+  const [showCodePopup, setShowCodePopup] = useState(false);
   
   // Get data from navigation state, fallback to mock data if not available
   const summaryData = location.state || {
@@ -40,8 +42,11 @@ const PlantUMLDisplay = () => {
   };
 
   const handleGenerateCode = () => {
-    console.log('Generate code clicked');
-    // This will be implemented later
+    setShowCodePopup(true);
+  };
+
+  const handleCloseCodePopup = () => {
+    setShowCodePopup(false);
   };
 
   return (
@@ -71,6 +76,13 @@ const PlantUMLDisplay = () => {
           </div>
         </div>
       </div>
+
+      {/* Code Popup */}
+      <CodePopup 
+        isOpen={showCodePopup} 
+        onClose={handleCloseCodePopup}
+        language="Java"
+      />
     </div>
   );
 };
