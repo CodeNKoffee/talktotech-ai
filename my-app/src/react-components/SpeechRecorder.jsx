@@ -15,6 +15,7 @@ const SpeechRecorder = () => {
   const [keywords, setKeywords] = useState([]);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     let interval;
@@ -59,24 +60,39 @@ const SpeechRecorder = () => {
           const data = await response.json();
           setTitle(data.title || "");
           setSummary(data.summary || "");
-          setOutputDiagram(data.output_diagram || []);
-          setKeywords(data.keywords || []);
-          setStatus("Done!");
+          setOutputDiagram(Array.isArray(data.output_diagram) ? data.output_diagram.join(', ') : (data.output_diagram || ""));
+          setKeywords(Array.isArray(data.keywords) ? data.keywords.join(', ') : (data.keywords || ""));
+          setStatus("Recording complete!");
+          setHasRecorded(true);
         } else {
           setStatus("Error during processing.");
+          setHasRecorded(true);
         }
       } catch (error) {
         console.error(error);
         setStatus("Network error.");
+        setHasRecorded(true);
       }
     };
 
     mediaRecorderRef.current.start();
   };
 
+  // Simplified stopRecording function
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current && isRecording) {
+      setFinalRecordingTime(recordingTime);
+      
+      // Stop the timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      
+      // Stop recording - this will trigger onstop event which handles backend
       mediaRecorderRef.current.stop();
+      
+      // Stop all tracks to release microphone
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
   };
 
@@ -229,7 +245,7 @@ const SpeechRecorder = () => {
         
         {/* Instruction text */}
         <p className="instruction-text">
-          {isRecording ? 'Listening...' : hasRecorded ? 'Recording complete!' : 'Click to start recording'}
+          {status || (isRecording ? 'Listening...' : hasRecorded ? 'Recording complete!' : 'Click to start recording')}
         </p>
 
         {/* Generate UML Button   btn , circle, arrow, text */}
