@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import GlassyButton from './GlassyButton';
 import './SpeechRecorder.css';
 
 const SpeechRecorder = () => {
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasRecorded, setHasRecorded] = useState(false);
@@ -172,8 +174,16 @@ const SpeechRecorder = () => {
   };
 
   const handleGenerateUML = () => {
-    // This will later integrate with backend
-    console.log('Generate UML diagrams clicked');
+    // Navigate to PlantUML display screen with summary data
+    navigate('/plantuml', {
+      state: {
+        title,
+        summary,
+        keywords,
+        outputDiagram,
+        duration: finalRecordingTime
+      }
+    });
   };
 
   const toggleSummary = () => {
@@ -196,6 +206,8 @@ const SpeechRecorder = () => {
 
   // Format summary text to separate sections
   const formatSummaryText = (text) => {
+    console.log('Input text:', text);
+    
     if (!text) return text;
 
     // If the summary doesn't include the expected "- **Header**:" pattern, just return the plain text.
