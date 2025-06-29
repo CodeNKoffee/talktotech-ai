@@ -256,7 +256,8 @@ skinparam style strictuml"""
                            ai_generate_func: Callable[[str], str] = None,
                            max_attempts: int = 2) -> Dict[str, any]:
         """
-        Use AI to fix PlantUML code when validation fails.
+        Use AI to fix PlantUML code when validation fails or improve it when valid.
+        Always runs at least one revision attempt for code improvement.
         
         Args:
             code: The initial PlantUML code with errors
@@ -273,37 +274,71 @@ skinparam style strictuml"""
         if keywords is None:
             keywords = []
             
+        if ai_generate_func is None:
+            return {
+                'plantuml_code': code,
+                'success': False,
+                'is_valid': False,
+                'status_message': "No AI function provided for revision",
+                'validation_errors': ["Cannot revise without AI function"],
+                'diagram_type': diagram_type,
+                'used_fallback': True,
+                'revision_attempts': 0
+            }
+            
         current_code = code
         attempts = 0
+        initial_is_valid, initial_errors = self.validate_plantuml(current_code, diagram_type)
         
+        # Always attempt at least one revision for improvement
         for attempt in range(max_attempts):
             attempts += 1
             
             # Validate current code
             is_valid, errors = self.validate_plantuml(current_code, diagram_type)
             
-            if is_valid:
+            # If code is valid and this isn't the first attempt, we can return
+            if is_valid and attempt > 0:
                 return {
                     'plantuml_code': current_code,
                     'success': True,
                     'is_valid': True,
-                    'status_message': f"Fixed after {attempts} revision attempt(s)",
+                    'status_message': f"Improved after {attempts} revision attempt(s)",
                     'validation_errors': [],
                     'diagram_type': diagram_type,
                     'used_fallback': False,
                     'revision_attempts': attempts
                 }
             
-            # Generate revision prompt
+            # Generate revision prompt (use different messages based on validity)
             from prompt_templates import get_revision_prompt
-            revision_prompt = get_revision_prompt(
-                initial_code=current_code,
-                diagram_type=diagram_type,
-                transcript=transcript,
-                summary=summary,
-                keywords=keywords,
-                errors=errors
-            )
+            
+            if is_valid:
+                # Code is valid but we want to improve it
+                improvement_errors = [
+                    "Code is syntactically correct but could be improved",
+                    "Consider adding more descriptive labels and relationships",
+                    "Ensure all important entities and interactions are represented",
+                    "Optimize layout and readability"
+                ]
+                revision_prompt = get_revision_prompt(
+                    initial_code=current_code,
+                    diagram_type=diagram_type,
+                    transcript=transcript,
+                    summary=summary,
+                    keywords=keywords,
+                    errors=improvement_errors
+                )
+            else:
+                # Code has validation errors
+                revision_prompt = get_revision_prompt(
+                    initial_code=current_code,
+                    diagram_type=diagram_type,
+                    transcript=transcript,
+                    summary=summary,
+                    keywords=keywords,
+                    errors=errors
+                )
             
             try:
                 # Get AI revision
@@ -318,24 +353,26 @@ skinparam style strictuml"""
             except Exception as e:
                 return {
                     'plantuml_code': code,
-                    'success': False,
-                    'is_valid': False,
+                    'success': initial_is_valid,
+                    'is_valid': initial_is_valid,
                     'status_message': f"AI revision failed: {str(e)[:100]}",
-                    'validation_errors': errors,
+                    'validation_errors': initial_errors,
                     'diagram_type': diagram_type,
                     'used_fallback': True,
                     'revision_attempts': attempts
                 }
         
-        # If we get here, max attempts reached without success
+        # If we get here, max attempts reached
+        final_is_valid, final_errors = self.validate_plantuml(current_code, diagram_type)
+        
         return {
             'plantuml_code': current_code,
-            'success': False,
-            'is_valid': False,
-            'status_message': f"Could not fix after {max_attempts} revision attempts",
-            'validation_errors': errors,
+            'success': final_is_valid,
+            'is_valid': final_is_valid,
+            'status_message': f"Completed {max_attempts} revision attempts - {'success' if final_is_valid else 'still has errors'}",
+            'validation_errors': final_errors,
             'diagram_type': diagram_type,
-            'used_fallback': True,
+            'used_fallback': not final_is_valid,
             'revision_attempts': attempts
         }
     
@@ -482,61 +519,34 @@ def generate_plantuml_simple(diagram_type: str, transcript: str,
     # Step 1: Generate initial code
     from prompt_templates import get_enhanced_prompt
     initial_prompt = get_enhanced_prompt(diagram_type, transcript, summary, keywords)
-    
-    try:
-        if ai_generate_func:
-            raw_output = ai_generate_func(initial_prompt)
-        else:
-            return {
-                'plantuml_code': "",
-                'success': False,
-                'is_valid': False,
-                'status_message': "No AI function provided",
-                'validation_errors': ["Cannot generate without AI function"],
-                'diagram_type': diagram_type,
-                'used_fallback': True
-            }
-            
-    except Exception as e:
-        return {
-            'plantuml_code': "",
-            'success': False,
-            'is_valid': False,
-            'status_message': f"AI generation failed: {str(e)[:100]}",
-            'validation_errors': [f"Generation error: {str(e)[:100]}"],
-            'diagram_type': diagram_type,
-            'used_fallback': True
-        }
-    
+
+    raw_output = ai_generate_func(initial_prompt)
+        
     # Step 2: Clean the output
     cleaned_code = processor.clean_plantuml_output(raw_output)
     
     # Step 3: Validate the cleaned code
     is_valid, validation_errors = processor.validate_plantuml(cleaned_code, diagram_type)
     
-    # Step 4: If validation fails and AI revision is enabled, try to fix
-    if not is_valid and enable_ai_revision and ai_generate_func:
-        revision_result = processor.fix_plantuml_with_ai(
-            code=cleaned_code,
-            diagram_type=diagram_type,
-            transcript=transcript,
-            summary=summary,
-            keywords=keywords,
-            ai_generate_func=ai_generate_func,
-            max_attempts=2
-        )
-        return revision_result
+    # Step 4: Always run AI revision as improvement step
+    print(f"🔄 Running AI revision for {diagram_type}...")
+    if validation_errors:
+        print(f"   Found {len(validation_errors)} validation errors to fix")
+    else:
+        print(f"   Running revision to improve code quality")
     
-    # Step 5: Return result
-    return {
-        'plantuml_code': cleaned_code,
-        'success': is_valid,
-        'is_valid': is_valid,
-        'status_message': "Generated successfully" if is_valid else f"Generated with {len(validation_errors)} validation errors",
-        'validation_errors': validation_errors,
-        'diagram_type': diagram_type,
-        'used_fallback': False
-    }
+    revision_result = processor.fix_plantuml_with_ai(
+        code=cleaned_code,
+        diagram_type=diagram_type,
+        transcript=transcript,
+        summary=summary,
+        keywords=keywords,
+        ai_generate_func=ai_generate_func,
+        max_attempts=2
+    )
+    
+    # Step 5: Return the revision result (always)
+    return revision_result
 
 
 # Legacy function compatibility
