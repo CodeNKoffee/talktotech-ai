@@ -2,11 +2,20 @@
 requests>=2.31.0
 python-dotenv>=1.0.0
 
+# Flask backend
+flask>=2.3.0
+flask-cors>=4.0.0
+
 # For API interactions
+replicate>=0.15.0
 ibm-watson>=7.0.0
+
+# For audio processing
+pydub>=0.25.0
 
 # For diagram generation (Layla's component)
 plantuml>=0.3.0
+JPype1>=1.4.1
 
 # For testing
 pytest>=7.4.0
@@ -14,9 +23,6 @@ pytest-mock>=3.11.0
 
 # For data handling
 pandas>=2.0.0
-
-# For image processing (Yasmeen's component)
-Pillow>=10.0.0
 
 # For JSON handling
 jsonschema>=4.19.0 

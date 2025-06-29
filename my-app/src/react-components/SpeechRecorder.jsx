@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import GlassyButton from './GlassyButton';
 import './SpeechRecorder.css';
 
@@ -6,8 +6,16 @@ const SpeechRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasRecorded, setHasRecorded] = useState(false);
+  const [status, setStatus] = useState("");
   const [showSummary, setShowSummary] = useState(false);
   const [finalRecordingTime, setFinalRecordingTime] = useState(0);
+  const [title, setTitle] = useState("");
+  const [summary, setSummary] = useState("");
+  const [outputDiagram, setOutputDiagram] = useState("");
+  const [keywords, setKeywords] = useState([]);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     let interval;
@@ -21,15 +29,82 @@ const SpeechRecorder = () => {
     return () => clearInterval(interval);
   }, [isRecording]);
 
+  const startRecording = async () => {
+    setStatus("Requesting microphone...");
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    audioChunksRef.current = [];
+
+    mediaRecorderRef.current.ondataavailable = (event) => {
+      audioChunksRef.current.push(event.data);
+    };
+
+    mediaRecorderRef.current.onstart = () => {
+      setIsRecording(true);
+      setStatus("Recording...");
+    };
+
+    mediaRecorderRef.current.onstop = async () => {
+      setIsRecording(false);
+      setStatus("Uploading and processing...");
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.wav");
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setTitle(data.title || "");
+          setSummary(data.summary || "");
+          setOutputDiagram(Array.isArray(data.output_diagram) ? data.output_diagram.join(', ') : (data.output_diagram || ""));
+          setKeywords(Array.isArray(data.keywords) ? data.keywords.join(', ') : (data.keywords || ""));
+          setStatus("Recording complete!");
+          setHasRecorded(true);
+        } else {
+          setStatus("Error during processing.");
+          setHasRecorded(true);
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus("Network error.");
+        setHasRecorded(true);
+      }
+    };
+
+    mediaRecorderRef.current.start();
+  };
+
+  // Simplified stopRecording function
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      setFinalRecordingTime(recordingTime);
+      
+      // Stop the timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      
+      // Stop recording - this will trigger onstop event which handles backend
+      mediaRecorderRef.current.stop();
+      
+      // Stop all tracks to release microphone
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
   const handleRecordClick = () => {
     if (isRecording) {
       // Stopping recording
       setFinalRecordingTime(recordingTime);
-      setIsRecording(false);
+      stopRecording();
       setHasRecorded(true);
     } else {
       // Starting recording
-      setIsRecording(true);
+      startRecording();
       setHasRecorded(false);
     }
   };
@@ -80,19 +155,19 @@ const SpeechRecorder = () => {
             </div>
             <div className="summary-item">
               <span className="summary-label">Title:</span>
-              <span className="summary-value">{hasRecorded ? 'Database Design and Interaction Flow for Web Application' : 'N/A'}</span>
+              <span className="summary-value">{hasRecorded ? title : 'N/A'}</span>
             </div>
             <div className="summary-item">
               <span className="summary-label">Summary:</span>
-              <span className="summary-value">{hasRecorded ? 'Web Application Project Database Design covering customer relations, ticket management, and admin access flow Web Application Project Database Design covering customer relations, ticket management, and admin access flowWeb Application Project Database Design covering customer relations, ticket management, and admin access flowWeb Application Project Database Design covering customer relations, ticket management, and admin access flowWeb Application Project Database Design covering customer relations, ticket management, and admin access flow' : 'N/A'}</span>
+              <span className="summary-value">{hasRecorded ? summary : 'N/A'}</span>
             </div>
             <div className="summary-item">
               <span className="summary-label">Keywords:</span>
-              <span className="summary-value">{hasRecorded ? 'Database, Relations, Customer, Seller, Ticket, Account, Middleware, Flow, Admin' : 'N/A'}</span>
+              <span className="summary-value">{hasRecorded ? keywords : 'N/A'}</span>
             </div>
             <div className="summary-item">
               <span className="summary-label">Output Diagrams:</span>
-              <span className="summary-value">{hasRecorded ? 'Usecase Diagram, ER Diagram, Sequence Diagram' : 'N/A'}</span>
+              <span className="summary-value">{hasRecorded ? outputDiagram : 'N/A'}</span>
             </div>
           </div>
         </div>
@@ -170,7 +245,7 @@ const SpeechRecorder = () => {
         
         {/* Instruction text */}
         <p className="instruction-text">
-          {isRecording ? 'Listening...' : hasRecorded ? 'Recording complete!' : 'Click to start recording'}
+          {status || (isRecording ? 'Listening...' : hasRecorded ? 'Recording complete!' : 'Click to start recording')}
         </p>
 
         {/* Generate UML Button   btn , circle, arrow, text */}
