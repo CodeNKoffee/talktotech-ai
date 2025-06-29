@@ -5,7 +5,7 @@ import replicate
 replicate_client = replicate.Client(api_token="r8_UFdwKaSNK8dV7EN1lqccgQCtjJNxhYt2mJ6No")
 
 def transcribe_audio(path):
-    with open(audio_path, "rb") as audio:
+    with open(path, "rb") as audio:
         print("Transcribing audio... This may take a while.")
         # Run the Whisper model
         transcript_obj = replicate_client.run(
