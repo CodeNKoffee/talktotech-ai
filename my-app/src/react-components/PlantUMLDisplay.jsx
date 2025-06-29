@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import './PlantUMLDisplay.css';
 import SummaryButton from './SummaryButton';
 import GenerateCodeButton from './GenerateCodeButton';
@@ -6,15 +7,32 @@ import PlantUMLCodePanel from './PlantUMLCodePanel';
 import PDFSVGPanel from './PDFSVGPanel';
 
 const PlantUMLDisplay = () => {
+  const location = useLocation();
   const [showSummary, setShowSummary] = useState(false);
   
-  // Mock data - this would come from props or context in real implementation
-  const mockSummaryData = {
+  // Get data from navigation state, fallback to mock data if not available
+  const summaryData = location.state || {
     title: "Team Meeting Discussion",
     summary: "**Meeting Overview**: \n- Discussed project roadmap and timeline\n- Reviewed current sprint progress\n- Identified blockers and dependencies\n\n**Key Decisions**: \n- Move deadline to next Friday\n- Assign additional resources to backend team\n- Schedule follow-up meeting for Thursday",
     keywords: "meeting, roadmap, sprint, blockers, deadline",
     outputDiagram: "Class Diagram, Sequence Diagram",
     duration: "15:32"
+  };
+
+  // Format duration properly if it's a number (seconds)
+  const formatDuration = (duration) => {
+    if (typeof duration === 'number') {
+      const mins = Math.floor(duration / 60);
+      const secs = duration % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return duration || 'N/A';
+  };
+
+  // Update duration format
+  const formattedSummaryData = {
+    ...summaryData,
+    duration: formatDuration(summaryData.duration)
   };
 
   const toggleSummary = () => {
@@ -32,7 +50,7 @@ const PlantUMLDisplay = () => {
       <SummaryButton 
         onToggle={toggleSummary}
         showSummary={showSummary}
-        summaryData={mockSummaryData}
+        summaryData={formattedSummaryData}
       />
 
       <div className="plantuml-container">

@@ -174,8 +174,16 @@ const SpeechRecorder = () => {
   };
 
   const handleGenerateUML = () => {
-    // Navigate to PlantUML display screen
-    navigate('/plantuml');
+    // Navigate to PlantUML display screen with summary data
+    navigate('/plantuml', {
+      state: {
+        title,
+        summary,
+        keywords,
+        outputDiagram,
+        duration: finalRecordingTime
+      }
+    });
   };
 
   const toggleSummary = () => {

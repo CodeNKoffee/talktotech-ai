@@ -18,6 +18,13 @@ body {
   overflow: hidden;
 }
 
+/* Remove focus ring from all buttons */
+.speech-recorder button:focus,
+.speech-recorder button:active,
+.speech-recorder button:focus-visible {
+  outline: none !important;
+}
+
 .container {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(20px);
@@ -171,6 +178,10 @@ body {
   outline: none;
 }
 
+.generate-uml-container:active {
+  outline: none;
+}
+
 .circle-button {
   display: flex;
   align-items: center;
@@ -294,6 +305,10 @@ body {
   outline: none;
 }
 
+.summary-toggle:active {
+  outline: none;
+}
+
 .summary-toggle svg {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
@@ -358,6 +373,10 @@ body {
 }
 
 .summary-close:focus {
+  outline: none;
+}
+
+.summary-close:active {
   outline: none;
 }
 

@@ -9,6 +9,13 @@
   position: relative;
 }
 
+/* Remove focus ring from all buttons */
+.plantuml-display button:focus,
+.plantuml-display button:active,
+.plantuml-display button:focus-visible {
+  outline: none !important;
+}
+
 .plantuml-container {
   width: 100%;
   height: 100%;
@@ -92,6 +99,10 @@
 }
 
 .generate-code-button:focus {
+  outline: none;
+}
+
+.generate-code-button:active {
   outline: none;
 }
 
