@@ -45,13 +45,8 @@ def analyze_meeting(transcript: str) -> dict:
   • Sequence Diagram
   • Usecase Diagram
   • Class Diagram
-  • Object Diagram
   • Component Diagram
-  • Deployment Diagram
-  • State Diagram
-  • Timing Diagram
   • Flowchart Diagram
-  • Activity Diagram
   • ER Diagram
 
 3. Propose a concise, descriptive title in the field "title".
