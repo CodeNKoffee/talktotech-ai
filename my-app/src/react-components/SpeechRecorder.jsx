@@ -194,6 +194,50 @@ const SpeechRecorder = () => {
     />
   );
 
+  // Format summary text to separate sections
+  const formatSummaryText = (text) => {
+    if (!text) return text;
+    
+    // Split by **Section Name**: pattern
+    const sections = text.split(/(?=- \*\*[^*]+\*\*:)/);
+    
+    return (
+      <div className="formatted-summary-content">
+        {sections.map((section, index) => {
+          if (!section.trim()) return null;
+          
+          // Extract section header
+          const headerMatch = section.match(/- \*\*([^*]+)\*\*:/);
+          if (!headerMatch) return null;
+          
+          const sectionTitle = headerMatch[1].trim();
+          const content = section.replace(headerMatch[0], '').trim();
+          
+          // Split content by bullet points (- )
+          const bulletPoints = content.split(/(?=\s*-\s+)/).filter(point => point.trim());
+          
+          return (
+            <div key={index} className="summary-section">
+              <div className="summary-section-header">{sectionTitle}</div>
+              <div className="summary-content">
+                {bulletPoints.map((point, pointIndex) => {
+                  const cleanPoint = point.replace(/^\s*-\s*/, '').trim();
+                  if (!cleanPoint) return null;
+                  
+                  return (
+                    <div key={pointIndex} className="summary-bullet">
+                      • {cleanPoint}
+                    </div>
+                  );
+                }).filter(Boolean)}
+              </div>
+            </div>
+          );
+        }).filter(Boolean)}
+      </div>
+    );
+  };
+
   return (
     <div className="speech-recorder">
       {/* Summary Button */}
@@ -240,7 +284,9 @@ const SpeechRecorder = () => {
                   <LoadingSkeleton width="90%" height="16px" />
                 </div>
               ) : (
-                <span className="summary-value">{hasRecorded ? summary : 'N/A'}</span>
+                <div className="summary-value formatted-summary">
+                  {hasRecorded ? formatSummaryText(summary) : 'N/A'}
+                </div>
               )}
             </div>
             <div className="summary-item">
