@@ -57,7 +57,7 @@ const SpeechRecorder = () => {
       setIsRecording(false);
       setIsProcessing(true);
       setStatus("Uploading and processing...");
-      
+
       // Set all fields to loading state
       setLoadingStates({
         title: true,
@@ -77,24 +77,24 @@ const SpeechRecorder = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          
+
           // Simulate progressive loading of each field
           // In real implementation, this would come from backend streaming/webhooks
           setTimeout(() => {
             setTitle(data.title || "");
             setLoadingStates(prev => ({ ...prev, title: false }));
           }, 500);
-          
+
           setTimeout(() => {
             setSummary(data.summary || "");
             setLoadingStates(prev => ({ ...prev, summary: false }));
           }, 1000);
-          
+
           setTimeout(() => {
             setKeywords(Array.isArray(data.keywords) ? data.keywords.join(', ') : (data.keywords || ""));
             setLoadingStates(prev => ({ ...prev, keywords: false }));
           }, 1500);
-          
+
           setTimeout(() => {
             setOutputDiagram(Array.isArray(data.output_diagram) ? data.output_diagram.join(', ') : (data.output_diagram || ""));
             setLoadingStates(prev => ({ ...prev, outputDiagram: false }));
@@ -135,15 +135,15 @@ const SpeechRecorder = () => {
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       setFinalRecordingTime(recordingTime);
-      
+
       // Stop the timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      
+
       // Stop recording - this will trigger onstop event which handles backend
       mediaRecorderRef.current.stop();
-      
+
       // Stop all tracks to release microphone
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
@@ -198,7 +198,7 @@ const SpeechRecorder = () => {
 
   // Loading skeleton component
   const LoadingSkeleton = ({ width = '100%', height = '20px', className = '' }) => (
-    <div 
+    <div
       className={`loading-skeleton ${className}`}
       style={{ width, height }}
     />
@@ -209,61 +209,68 @@ const SpeechRecorder = () => {
     console.log('Input text:', text);
     
     if (!text) return text;
-    
-    // Handle simple text without formatting
-    if (!text.includes('**')) {
+
+    // If the summary doesn't include the expected "- **Header**:" pattern, just return the plain text.
+    if (!/- \*\*[^*]+\*\*:/g.test(text)) {
       return (
-        <div className="formatted-summary-content">
-          <div className="summary-simple-text">{text}</div>
+        <div className="formatted-summary-content plain-summary">
+          {text.split("\n").map((line, idx) => (
+            <p key={idx} style={{ margin: 0 }}>
+              {line}
+            </p>
+          ))}
         </div>
       );
     }
-    
-    // Split by **Section Name**: pattern (without leading dash)
-    const sections = text.split(/(?=\*\*[^*]+\*\*:)/);
-    console.log('Sections found:', sections);
-    
-    return (
-      <div className="formatted-summary-content">
-        {sections.map((section, index) => {
-          if (!section.trim()) return null;
-          
-          // Extract section header (without leading dash)
-          const headerMatch = section.match(/\*\*([^*]+)\*\*:/);
-          if (!headerMatch) {
-            console.log('No header match for section:', section);
-            return null;
-          }
-          
-          const sectionTitle = headerMatch[1].trim();
-          const content = section.replace(headerMatch[0], '').trim();
-          
-          console.log('Section title:', sectionTitle);
-          console.log('Section content:', content);
-          
-          // Split content by bullet points (- )
-          const bulletPoints = content.split(/(?=\s*-\s+)/).filter(point => point.trim());
-          
-          return (
-            <div key={index} className="summary-section">
-              <div className="summary-section-header">{sectionTitle}</div>
-              <div className="summary-bullets-container">
-                {bulletPoints.map((point, pointIndex) => {
-                  const cleanPoint = point.replace(/^\s*-\s*/, '').trim();
-                  if (!cleanPoint) return null;
-                  
-                  return (
-                    <div key={pointIndex} className="summary-bullet">
-                      • {cleanPoint}
-                    </div>
-                  );
-                }).filter(Boolean)}
-              </div>
-            </div>
-          );
-        }).filter(Boolean)}
-      </div>
-    );
+
+    // Split by **Section Name**: pattern
+    const sections = text.split(/(?=- \*\*[^*]+\*\*:)/);
+
+    const renderedSections = sections.map((section, index) => {
+      if (!section.trim()) return null;
+
+      // Extract section header
+      const headerMatch = section.match(/- \*\*([^*]+)\*\*:/);
+      if (!headerMatch) return null;
+
+      const sectionTitle = headerMatch[1].trim();
+      const content = section.replace(headerMatch[0], '').trim();
+
+      // Split content by bullet points (- )
+      const bulletPoints = content.split(/(?=\s*-\s+)/).filter(point => point.trim());
+
+      return (
+        <div key={index} className="summary-section">
+          <div className="summary-section-header">{sectionTitle}</div>
+          <div className="summary-bullets-container">
+            {bulletPoints.map((point, pointIndex) => {
+              const cleanPoint = point.replace(/^\s*-\s*/, '').trim();
+              if (!cleanPoint) return null;
+              return (
+                <div key={pointIndex} className="summary-bullet">
+                  • {cleanPoint}
+                </div>
+              );
+            }).filter(Boolean)}
+          </div>
+        </div>
+      );
+    }).filter(Boolean);
+
+    // If no sections were rendered (pattern mismatch), fall back to plain text
+    if (renderedSections.length === 0) {
+      return (
+        <div className="formatted-summary-content plain-summary">
+          {text.split("\n").map((line, idx) => (
+            <p key={idx} style={{ margin: 0 }}>
+              {line}
+            </p>
+          ))}
+        </div>
+      );
+    }
+
+    return <div className="formatted-summary-content">{renderedSections}</div>;
   };
 
   return (
@@ -271,10 +278,10 @@ const SpeechRecorder = () => {
       {/* Summary Button */}
       <button className="summary-toggle" onClick={toggleSummary}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 3H15L21 9V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M9 3V9H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M9 13H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          <path d="M9 17H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M9 3H15L21 9V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 3V9H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 13H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M9 17H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
         Summary
       </button>
@@ -286,7 +293,7 @@ const SpeechRecorder = () => {
             <h3>Session Summary</h3>
             <button className="summary-close" onClick={toggleSummary}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
@@ -345,71 +352,71 @@ const SpeechRecorder = () => {
         <div className={`speech-circle ${isRecording ? 'recording' : ''}`}>
           <div className="inner-circle">
             <div className="mic-icon">
-              <svg 
-                width="48" 
-                height="48" 
-                viewBox="0 0 24 24" 
-                fill="none" 
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 {/* Microphone capsule */}
-                <rect 
-                  x="9" 
-                  y="2" 
-                  width="6" 
-                  height="12" 
-                  rx="3" 
+                <rect
+                  x="9"
+                  y="2"
+                  width="6"
+                  height="12"
+                  rx="3"
                   fill="rgba(255, 255, 255, 0.8)"
                 />
                 {/* Left arc */}
-                <path 
-                  d="M6 10V11C6 14.3137 8.68629 17 12 17C15.3137 17 18 14.3137 18 11V10" 
-                  stroke="rgba(255, 255, 255, 0.8)" 
-                  strokeWidth="2" 
+                <path
+                  d="M6 10V11C6 14.3137 8.68629 17 12 17C15.3137 17 18 14.3137 18 11V10"
+                  stroke="rgba(255, 255, 255, 0.8)"
+                  strokeWidth="2"
                   strokeLinecap="round"
                 />
                 {/* Stand */}
-                <line 
-                  x1="12" 
-                  y1="17" 
-                  x2="12" 
-                  y2="21" 
-                  stroke="rgba(255, 255, 255, 0.8)" 
-                  strokeWidth="2" 
+                <line
+                  x1="12"
+                  y1="17"
+                  x2="12"
+                  y2="21"
+                  stroke="rgba(255, 255, 255, 0.8)"
+                  strokeWidth="2"
                   strokeLinecap="round"
                 />
                 {/* Base */}
-                <line 
-                  x1="9" 
-                  y1="21" 
-                  x2="15" 
-                  y2="21" 
-                  stroke="rgba(255, 255, 255, 0.8)" 
-                  strokeWidth="2" 
+                <line
+                  x1="9"
+                  y1="21"
+                  x2="15"
+                  y2="21"
+                  stroke="rgba(255, 255, 255, 0.8)"
+                  strokeWidth="2"
                   strokeLinecap="round"
                 />
               </svg>
             </div>
           </div>
         </div>
-        
+
         {/* Recording controls */}
         <div className={`recording-controls ${isRecording ? 'recording' : ''}`}>
           {/* Record button */}
-          <GlassyButton 
+          <GlassyButton
             className={`record-button ${isRecording ? 'recording' : ''}`}
             onClick={handleRecordClick}
             color={isRecording ? 'red' : 'white'}
           >
             {isRecording ? 'Stop' : 'Record'}
           </GlassyButton>
-          
+
           {/* Timer */}
           <div className={`timer ${isRecording ? 'visible' : ''}`}>
             {formatTime(recordingTime)}
           </div>
         </div>
-        
+
         {/* Instruction text */}
         <p className="instruction-text">
           {status || (isRecording ? 'Listening...' : isProcessing ? 'Processing your recording...' : hasRecorded ? 'Recording complete!' : 'Click to start recording')}
@@ -417,7 +424,7 @@ const SpeechRecorder = () => {
 
         {/* Generate UML Button   btn , circle, arrow, text */}
         {hasRecorded && !isRecording && !isProcessing && (
-          <button className="generate-uml-container"> 
+          <button className="generate-uml-container">
             <span className="circle-button" onClick={handleGenerateUML}>
               <span className="circle-arrow"></span>
             </span>
