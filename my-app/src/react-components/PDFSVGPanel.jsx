@@ -1,10 +1,10 @@
 import React from 'react';
 
-const PDFSVGPanel = () => {
+const PDFSVGPanel = ({ diagramType }) => {
   return (
     <div className="pdf-svg-container">
       <div className="panel-header">
-        <h3>PDF/SVG</h3>
+        <h3>{diagramType || 'PDF/SVG'}</h3>
       </div>
       <div className="pdf-svg-content">
         <div className="svg-placeholder">
