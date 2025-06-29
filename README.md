@@ -1,12 +1,17 @@
-# TalkToTech
+# TalkToTech - Turn Conversations Into Diagrams & Code
 
 ## AI & Automation Unpacked Hackathon Submission
 
 **Turn conversations into UML diagrams & code. From verbal ideas to technical implementation instantly.**
 
 🌐 **Live Demo:** [https://talktotech-ai.vercel.app/](https://talktotech-ai.vercel.app/)  
+*Note: Live preview may not fully function due to disabled/depleted API tokens*
+
 📹 **Video Demo:** [Watch our 3-minute demonstration](https://drive.google.com/file/d/1j11mzUInQ6gtEBuJ_EXZC_NRCrz9pROh/view?usp=sharing)  
+
 📂 **Repository:** [GitHub Repository](https://github.com/CodeNKoffee/talktotech-ai/tree/master)
+
+💡 **Want to test the full functionality?** Download the repo locally, sign up at [Replicate](https://replicate.com), get your own API token, and replace it in the configuration files!
 
 This repository showcases AI-powered automation solutions developed during the **IBM AI & Automation Unpacked Hackathon** at **IBM TechXchange 2025** (June 26-29, 2025). Our project focuses on leveraging **IBM Granite models** to create innovative tools that transform spoken technical conversations into structured, production-ready system diagrams.
 
