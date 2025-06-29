@@ -91,11 +91,20 @@ class GranitePlantUMLGenerator:
         Generate PlantUML from a meeting object.
         
         Args:
-            meeting: Meeting dictionary with transcript, diagram type, keywords, etc.
+            meeting: Meeting dictionary with transcript, diagram type(s), keywords, etc.
         """
+        # Handle the case where output_diagram is a list (new format) or string (legacy)
+        diagram_type = meeting["output_diagram"]
+        if isinstance(diagram_type, list) and diagram_type:
+            # Use the first diagram type if multiple are suggested
+            diagram_type = diagram_type[0]
+        elif isinstance(diagram_type, list) and not diagram_type:
+            # Default to a common diagram type if list is empty
+            diagram_type = "Sequence Diagram"
+        
         result = self.generate_plantuml(
             transcript=meeting["transcript"],
-            diagram_type=meeting["output_diagram"],
+            diagram_type=diagram_type,
             keywords=meeting["keywords"],
             summary=meeting.get("summary", "")
         )

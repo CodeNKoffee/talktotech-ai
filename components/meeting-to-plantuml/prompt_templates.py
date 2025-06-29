@@ -5,7 +5,7 @@ Optimized for Granite 3.3-8b instruct model.
 """
 
 ENHANCED_PROMPT_TEMPLATES = {
-    "UML Sequence Diagram": """
+    "Sequence Diagram": """
 You are a PlantUML expert. Create a syntactically PERFECT sequence diagram.
 
 INPUT DATA:
@@ -60,7 +60,7 @@ REQUIREMENTS:
 Generate ONLY the PlantUML code. No explanations.
 """,
 
-  "UML Class Diagram": """
+  "Class Diagram": """
 You are a PlantUML expert. Generate a syntactically correct UML Class Diagram.
 
 INPUT:
@@ -106,7 +106,7 @@ REQUIREMENTS:
 """
 ,
 
-    "Flowchart": """
+    "Flowchart Diagram": """
 You are a PlantUML expert. Create a syntactically PERFECT activity diagram (flowchart).
 
 INPUT DATA:
@@ -213,7 +213,7 @@ REQUIREMENTS:
 Generate ONLY the PlantUML code. No explanations.
 """,
 
-    "Use Case Diagram": """
+    "Usecase Diagram": """
 You are a PlantUML expert. Create a syntactically PERFECT use case diagram.
 
 INPUT DATA:
