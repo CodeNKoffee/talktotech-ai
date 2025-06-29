@@ -1,13 +1,13 @@
 """
 Simplified utility functions for PlantUML code processing and validation.
-Focused on cleaning and validation without error fixing or AI revision.
+Focused on cleaning and validation with AI revision capability.
 """
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Callable
 
 
 class PlantUMLProcessor:
-    """Simplified PlantUML processor with cleaning and validation only."""
+    """Simplified PlantUML processor with cleaning, validation, and AI revision."""
     
     def __init__(self):
         self.common_fixes = {
@@ -78,7 +78,6 @@ class PlantUMLProcessor:
         if end_match:
             output = output[:end_match.end()]
         elif '@startuml' in output.lower() and '@enduml' not in output.lower():
-            # Add missing @enduml
             output += '\n@enduml'
         
         return output
@@ -95,13 +94,12 @@ class PlantUMLProcessor:
         if end_match:
             output = output[:end_match.end()]
         elif '@startchen' in output.lower() and '@endchen' not in output.lower():
-            # Add missing @endchen
             output += '\n@endchen'
         
         return output
     
     def _fix_class_diagram_issues(self, output: str) -> str:
-        """Fix common class diagram syntax issues with correct PlantUML relationship symbols."""
+        """Fix common class diagram syntax issues."""
         # Fix class declarations
         output = re.sub(r'class\s+(\w+)\s*{\s*{', r'class \1 {', output)
         output = re.sub(r'}\s*}', '}', output)
@@ -113,20 +111,11 @@ class PlantUMLProcessor:
         output = re.sub(r'([+\-#])\s*(\w+)\s*\(\s*\)\s*:\s*(\w+)', r'\1\2(): \3', output)
         
         # Fix relationships - convert old syntax to correct PlantUML syntax
-        # Extension/Inheritance: Child <|-- Parent (NOT --|>)
         output = re.sub(r'(\w+)\s*--\|>\s*(\w+)', r'\1 <|-- \2', output)
         output = re.sub(r'(\w+)\s*-\|>\s*(\w+)', r'\1 <|-- \2', output)
-        
-        # Implementation: Concrete <|.. Interface (NOT <|.)
         output = re.sub(r'(\w+)\s*<\|\.\s*(\w+)', r'\1 <|.. \2', output)
-        
-        # Composition: Whole *-- Part (NOT --*)
         output = re.sub(r'(\w+)\s*--\*\s*(\w+)', r'\1 *-- \2', output)
-        
-        # Aggregation: Container o-- Element (NOT o--)
         output = re.sub(r'(\w+)\s*o-\s*(\w+)', r'\1 o-- \2', output)
-        
-        # Association/Dependency: Client --> Used (keep as is)
         output = re.sub(r'(\w+)\s*-->\s*(\w+)', r'\1 --> \2', output)
         
         # Fix cardinality with double quotes and proper spacing
@@ -166,9 +155,9 @@ class PlantUMLProcessor:
         
         # Ensure start/stop
         if 'start' not in output.lower() and ':' in output:
-            output = re.sub(r'(@startuml[^\n]*\n)', r'\1start\n', output, flags=re.IGNORECASE)
+            output = output.replace('@startuml', '@startuml\nstart')
         if 'stop' not in output.lower() and 'end' not in output.lower() and ':' in output:
-            output = re.sub(r'(@enduml)', r'stop\n\1', output, flags=re.IGNORECASE)
+            output = output.replace('@enduml', 'stop\n@enduml')
         
         return output
     
@@ -204,7 +193,7 @@ class PlantUMLProcessor:
         return output
     
     def _fix_erd_diagram_issues(self, output: str) -> str:
-        """Fix common ERD (Chen's notation) syntax issues with proper composite attribute formatting."""
+        """Fix common ERD (Chen's notation) syntax issues."""
         # Skip if not an ERD
         if '@startchen' not in output.lower():
             return output
@@ -215,11 +204,11 @@ class PlantUMLProcessor:
         # Fix entity declarations
         output = re.sub(r'entity\s+(\w+)\s*{\s*{', r'entity \1 {', output)
         
-        # Fix attribute syntax - ensure proper TYPE format
+        # Fix attribute syntax
         output = re.sub(r'(\w+)\s*:\s*([A-Z][a-z]+)', r'\1 : \2', output)
         output = re.sub(r'(\w+)\s*:\s*([a-z][a-z]*)', lambda m: f'{m.group(1)} : {m.group(2).upper()}', output)
        
-        # Fix relationship connections - ensure proper Chen notation
+        # Fix relationship connections
         output = re.sub(r'(\w+)\s+"1"\s*--\s*"\*"\s*(\w+)', r'\1 -1- \2', output)
         output = re.sub(r'(\w+)\s*-->\s*(\w+)', r'\1 -N- \2', output)
         output = re.sub(r'(\w+)\s*--\|>\s*(\w+)', r'\1 -1- \2', output)
@@ -227,9 +216,6 @@ class PlantUMLProcessor:
         
         # Remove method definitions with ()
         output = re.sub(r'\s*\w+\s*\([^)]*\)\s*:[^}]*', '', output)
-        
-        # Ensure Chen notation cardinality format
-        output = re.sub(r'(\w+)\s+(\w+)\s*:\s*(\w+)', r'\1 -1- \2 -N- \3', output)
         
         return output
     
@@ -245,12 +231,7 @@ skinparam classAttributeIconSize 0
 skinparam style strictuml"""
         
         if 'skinparam' not in output:
-            output = re.sub(
-                r'(@startuml[^\n]*)', 
-                f'\\1\n{styling}', 
-                output, 
-                flags=re.IGNORECASE
-            )
+            output = output.replace('@startuml', f'@startuml\n{styling}')
         
         return output
     
@@ -264,11 +245,99 @@ skinparam style strictuml"""
         lines = output.split('\n')
         cleaned_lines = []
         for line in lines:
-            line = line.strip()
-            if line:
-                cleaned_lines.append(line)
+            cleaned_line = line.rstrip()
+            if cleaned_line:
+                cleaned_lines.append(cleaned_line)
         
         return '\n'.join(cleaned_lines)
+    
+    def fix_plantuml_with_ai(self, code: str, diagram_type: str, transcript: str, 
+                           summary: str = "", keywords: List[str] = None, 
+                           ai_generate_func: Callable[[str], str] = None,
+                           max_attempts: int = 2) -> Dict[str, any]:
+        """
+        Use AI to fix PlantUML code when validation fails.
+        
+        Args:
+            code: The initial PlantUML code with errors
+            diagram_type: Type of diagram being generated
+            transcript: Original transcript text
+            summary: Summary of the transcript
+            keywords: List of keywords
+            ai_generate_func: Function to call AI model
+            max_attempts: Maximum number of revision attempts
+            
+        Returns:
+            Dictionary with fixed code and metadata
+        """
+        if keywords is None:
+            keywords = []
+            
+        current_code = code
+        attempts = 0
+        
+        for attempt in range(max_attempts):
+            attempts += 1
+            
+            # Validate current code
+            is_valid, errors = self.validate_plantuml(current_code, diagram_type)
+            
+            if is_valid:
+                return {
+                    'plantuml_code': current_code,
+                    'success': True,
+                    'is_valid': True,
+                    'status_message': f"Fixed after {attempts} revision attempt(s)",
+                    'validation_errors': [],
+                    'diagram_type': diagram_type,
+                    'used_fallback': False,
+                    'revision_attempts': attempts
+                }
+            
+            # Generate revision prompt
+            from prompt_templates import get_revision_prompt
+            revision_prompt = get_revision_prompt(
+                initial_code=current_code,
+                diagram_type=diagram_type,
+                transcript=transcript,
+                summary=summary,
+                keywords=keywords,
+                errors=errors
+            )
+            
+            try:
+                # Get AI revision
+                revised_code = ai_generate_func(revision_prompt)
+                
+                # Clean the revised code
+                revised_code = self.clean_plantuml_output(revised_code)
+                
+                # Update current code for next iteration
+                current_code = revised_code
+                
+            except Exception as e:
+                return {
+                    'plantuml_code': code,
+                    'success': False,
+                    'is_valid': False,
+                    'status_message': f"AI revision failed: {str(e)[:100]}",
+                    'validation_errors': errors,
+                    'diagram_type': diagram_type,
+                    'used_fallback': True,
+                    'revision_attempts': attempts
+                }
+        
+        # If we get here, max attempts reached without success
+        return {
+            'plantuml_code': current_code,
+            'success': False,
+            'is_valid': False,
+            'status_message': f"Could not fix after {max_attempts} revision attempts",
+            'validation_errors': errors,
+            'diagram_type': diagram_type,
+            'used_fallback': True,
+            'revision_attempts': attempts
+        }
     
     def validate_plantuml(self, code: str, diagram_type: Optional[str] = None) -> Tuple[bool, List[str]]:
         """Enhanced validation for PlantUML code with detailed error reporting."""
@@ -294,8 +363,8 @@ skinparam style strictuml"""
         
         # Diagram-specific validation
         if diagram_type:
-            type_errors = self._validate_diagram_type(code, diagram_type)
-            errors.extend(type_errors)
+            diagram_errors = self._validate_diagram_type(code, diagram_type)
+            errors.extend(diagram_errors)
         
         # Syntax validation
         syntax_errors = self._validate_syntax(code)
@@ -304,40 +373,40 @@ skinparam style strictuml"""
         return len(errors) == 0, errors
     
     def _validate_diagram_type(self, code: str, diagram_type: str) -> List[str]:
-        """Validate diagram-specific syntax with focus on correct relationship symbols."""
+        """Validate diagram-specific syntax."""
         errors = []
         
         if 'Class Diagram' in diagram_type:
-            if not re.search(r'class\s+\w+\s*{', code):
-                errors.append("Class diagram should contain class definitions")
+            if not re.search(r'class\s+\w+', code, re.IGNORECASE):
+                errors.append("No class definitions found in class diagram")
+            
+            # Check for incorrect relationship symbols
+            if re.search(r'--\|>', code):
+                errors.append("Use <|-- for inheritance, not --|>")
+            if re.search(r'--\*', code):
+                errors.append("Use *-- for composition, not --*")
 
         elif 'Sequence Diagram' in diagram_type:
-            if not re.search(r'participant\s+', code):
-                errors.append("Sequence diagram should contain participant declarations")
-            if not re.search(r'->|-->|->', code):
-                errors.append("Sequence diagram should contain message arrows")
+            if not re.search(r'participant\s+\w+', code, re.IGNORECASE):
+                errors.append("No participants found in sequence diagram")
         
         elif 'Flowchart' in diagram_type or 'Activity' in diagram_type:
-            if not re.search(r'start|stop|:', code):
-                errors.append("Activity diagram should contain activities or start/stop")
+            if not re.search(r':[^;]+;', code):
+                errors.append("No activities found in flowchart/activity diagram")
         
         elif 'Component Diagram' in diagram_type:
-            if not re.search(r'\[.*\]|component\s+', code):
-                errors.append("Component diagram should contain components")
-            if not re.search(r'-->', code):
-                errors.append("Component diagram should contain connections")
+            if not re.search(r'\[[\w\s]+\]|component\s+', code, re.IGNORECASE):
+                errors.append("No components found in component diagram")
         
         elif 'Use Case Diagram' in diagram_type:
-            if not re.search(r'actor\s+|\(.*\)', code):
-                errors.append("Use case diagram should contain actors or use cases")
+            if not re.search(r'actor\s+\w+|\([^)]+\)', code, re.IGNORECASE):
+                errors.append("No actors or use cases found in use case diagram")
         
         elif 'ER Diagram' in diagram_type:
-            if not re.search(r'@startchen', code):
-                errors.append("ER diagram should use @startchen")
-            if not re.search(r'entity\s+\w+', code):
-                errors.append("ER diagram should contain entity definitions")
-            if re.search(r'\w+\s*\([^)]*\)', code):
-                errors.append("ER Diagram should not contain method definitions")
+            if '@startchen' not in code.lower():
+                errors.append("ER Diagrams must use @startchen/@endchen format")
+            if not re.search(r'entity\s+\w+', code, re.IGNORECASE):
+                errors.append("No entities found in ER diagram")
             
         return errors
     
@@ -351,39 +420,35 @@ skinparam style strictuml"""
             open_count = code.count(open_br)
             close_count = code.count(close_br)
             if open_count != close_count:
-                errors.append(f"Unmatched {open_br}{close_br} brackets")
+                errors.append(f"Unmatched {open_br}{close_br} brackets: {open_count} opening, {close_count} closing")
         
         # Check for common syntax errors
         if re.search(r'-->\s*-->', code):
-            errors.append("Invalid double arrow syntax")
-        
-        if re.search(r':\w+\+', code):
-            errors.append("Invalid type syntax (Type+ is not valid)")
-        
+            errors.append("Invalid arrow syntax: --> -->")
+
         return errors
     
     def format_output(self, meeting_data: Dict, plantuml_code: str) -> str:
-        """Format the output for display with validation results."""
-        separator = "=" * 80
-        
-        # Validate the code
-        is_valid, errors = self.validate_plantuml(plantuml_code, meeting_data.get('output_diagram'))
-        
-        validation_status = "✓ VALID" if is_valid else "✗ INVALID"
-        error_info = ""
-        if errors:
-            error_info = f"\nValidation Errors:\n" + "\n".join(f"  - {error}" for error in errors)
-        
-        return f"""
-{separator}
-Generated PlantUML for: {meeting_data.get('title', 'Untitled')}
-Diagram Type: {meeting_data.get('output_diagram', 'Unknown')}
-Keywords: {', '.join(meeting_data.get('keywords', []))}
-Validation Status: {validation_status}{error_info}
-{separator}
+        """Format the final output with meeting context."""
+        formatted_output = f"""
+# Meeting Analysis Report
+
+## Meeting Details
+- **Transcript**: {meeting_data.get('transcript', 'N/A')[:200]}...
+- **Keywords**: {meeting_data.get('keywords', [])}
+- **Summary**: {meeting_data.get('summary', 'N/A')}
+
+## Generated PlantUML Diagram
+
+```plantuml
 {plantuml_code}
-{separator}
+```
+
+---
+Generated using AI-powered PlantUML processor
 """
+        return formatted_output
+
 
 # Factory function for easy usage
 def create_plantuml_processor() -> PlantUMLProcessor:
@@ -391,12 +456,12 @@ def create_plantuml_processor() -> PlantUMLProcessor:
     return PlantUMLProcessor()
 
 
-# Simple generation function
+# Enhanced generation function with AI revision capability
 def generate_plantuml_simple(diagram_type: str, transcript: str, 
                            summary: str = "", keywords: List[str] = None,
-                           ai_generate_func=None) -> Dict[str, any]:
+                           ai_generate_func=None, enable_ai_revision: bool = True) -> Dict[str, any]:
     """
-    Simple function to generate PlantUML with cleaning and validation only.
+    Generate PlantUML with cleaning, validation, and optional AI revision.
     
     Args:
         diagram_type: Type of UML diagram
@@ -404,6 +469,7 @@ def generate_plantuml_simple(diagram_type: str, transcript: str,
         summary: Summary of transcript
         keywords: List of keywords
         ai_generate_func: Function to call AI model
+        enable_ai_revision: Whether to use AI revision for fixing errors
         
     Returns:
         Dictionary with results and metadata
@@ -418,48 +484,60 @@ def generate_plantuml_simple(diagram_type: str, transcript: str,
     initial_prompt = get_enhanced_prompt(diagram_type, transcript, summary, keywords)
     
     try:
-        # Generate initial code
-        raw_output = ai_generate_func(initial_prompt)
-        
-        # Clean the output
-        cleaned_code = processor.clean_plantuml_output(raw_output)
-        
-        # Validate the code
-        is_valid, errors = processor.validate_plantuml(cleaned_code, diagram_type)
-        
-        if is_valid:
-            return {
-                'plantuml_code': cleaned_code,
-                'success': True,
-                'is_valid': True,
-                'status_message': "Successfully generated valid PlantUML",
-                'validation_errors': [],
-                'diagram_type': diagram_type,
-                'used_fallback': False
-            }
+        if ai_generate_func:
+            raw_output = ai_generate_func(initial_prompt)
         else:
-            # Return cleaned code even if invalid (let user decide)
             return {
-                'plantuml_code': cleaned_code,
+                'plantuml_code': "",
                 'success': False,
                 'is_valid': False,
-                'status_message': f"Generated PlantUML has {len(errors)} validation errors",
-                'validation_errors': errors,
+                'status_message': "No AI function provided",
+                'validation_errors': ["Cannot generate without AI function"],
                 'diagram_type': diagram_type,
-                'used_fallback': False
+                'used_fallback': True
             }
             
     except Exception as e:
-        # Return fallback on exception
         return {
             'plantuml_code': "",
             'success': False,
-            'is_valid': True,
-            'status_message': f"Exception occurred: {str(e)[:100]}",
-            'validation_errors': [],
+            'is_valid': False,
+            'status_message': f"AI generation failed: {str(e)[:100]}",
+            'validation_errors': [f"Generation error: {str(e)[:100]}"],
             'diagram_type': diagram_type,
             'used_fallback': True
         }
+    
+    # Step 2: Clean the output
+    cleaned_code = processor.clean_plantuml_output(raw_output)
+    
+    # Step 3: Validate the cleaned code
+    is_valid, validation_errors = processor.validate_plantuml(cleaned_code, diagram_type)
+    
+    # Step 4: If validation fails and AI revision is enabled, try to fix
+    if not is_valid and enable_ai_revision and ai_generate_func:
+        revision_result = processor.fix_plantuml_with_ai(
+            code=cleaned_code,
+            diagram_type=diagram_type,
+            transcript=transcript,
+            summary=summary,
+            keywords=keywords,
+            ai_generate_func=ai_generate_func,
+            max_attempts=2
+        )
+        return revision_result
+    
+    # Step 5: Return result
+    return {
+        'plantuml_code': cleaned_code,
+        'success': is_valid,
+        'is_valid': is_valid,
+        'status_message': "Generated successfully" if is_valid else f"Generated with {len(validation_errors)} validation errors",
+        'validation_errors': validation_errors,
+        'diagram_type': diagram_type,
+        'used_fallback': False
+    }
+
 
 # Legacy function compatibility
 def clean_plantuml_output(output: str) -> str:
