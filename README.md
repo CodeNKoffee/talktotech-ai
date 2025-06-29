@@ -2,7 +2,13 @@
 
 ## AI & Automation Unpacked Hackathon Submission
 
-This repository showcases AI-powered automation solutions developed during the **IBM AI & Automation Unpacked Hackathon**. Our project focuses on leveraging **IBM Granite models**, accessible via open-source platforms or **IBM watsonx.ai**, to create innovative tools that enhance efficiency and transform business processes.
+**Turn conversations into UML diagrams & code. From verbal ideas to technical implementation instantly.**
+
+🌐 **Live Demo:** [talktotech.vercel.app](https://talktotech.vercel.app/)  
+📹 **Video Demo:** [Watch our 3-minute demonstration](https://drive.google.com/file/d/1j11mzUInQ6gtEBuJ_EXZC_NRCrz9pROh/view?usp=sharing)  
+📂 **Repository:** [GitHub Repository](https://github.com/CodeNKoffee/talktotech-ai/tree/master)
+
+This repository showcases AI-powered automation solutions developed during the **IBM AI & Automation Unpacked Hackathon** at **IBM TechXchange 2025** (June 26-29, 2025). Our project focuses on leveraging **IBM Granite models** to create innovative tools that transform spoken technical conversations into structured, production-ready system diagrams.
 
 ---
 
@@ -12,138 +18,137 @@ The hackathon's core objective was to design and build proof-of-concept AI solut
 
 ---
 
-## ✨ Our Solution
+## 🎯 The Problem We Solve
 
-*(This section will be detailed by your team, outlining your specific project idea, its features, and how it utilizes IBM Granite models to solve a particular problem, e.g., a smart meeting summarizer or a diagram generator.)*
+**Most technical meetings are goldmines of ideas. But here's the problem — most of that gold never leaves the room.**
 
-### Team Members
+Developers talk. Architects plan. PMs listen. But when it comes time to capture it all? You get scattered notes, outdated diagrams, and wasted potential.
 
-* **Ahmed Dabour**
-* **Hatem Soliman**
-* **Layla Khaled**
-* **Salma Tarek Soliman**
-* **Yasmeen Tarek**
+That's the bottleneck we're breaking.
 
-### 🎯 Your Solution: Smart Meeting-to-Diagram Generator
+---
 
-Your merged idea combining **Smart Meeting Recap/Notes** with **Diagram Generator** is brilliant because:
+## ✨ Our Solution: TalkToTech
 
-#### **Why This Solution Stands Out:**
+**An AI-powered system that turns spoken technical conversations into structured, production-ready system diagrams — all in one flow.**
 
-1. **Multi-Modal Granite Integration**: You're leveraging multiple Granite models effectively:
-   - **Granite Speech 8B** for speech-to-text (meeting transcription)
-   - **Granite 3.3 8B Instruct** for reasoning and summarization
-   - **Granite Code** for code generation
-   - **Granite Vision** for diagram interpretation
+### How It Works
 
-2. **Real Business Value**: This directly addresses the hackathon's goal of "streamlining everyday business processes" - meetings are a universal pain point in business!
+1. **Drop your audio file** - Simple upload interface
+2. **AI transcription** - Surgical precision speech-to-text conversion
+3. **Intelligent analysis** - IBM Granite Instruct reads between the lines, analyzes context, extracts keywords, chooses the right diagram type (sequence, class, architecture), and summarizes it all
+4. **Code generation** - IBM Granite Code transforms insights into raw PlantUML and renders clear, professional diagrams with corresponding code in the most applicable programming language (Java, Python, SQL, etc.)
 
-3. **Technical Innovation**: The workflow you've designed is sophisticated:
+### What Makes Us Different
 
-   ```text
-   Speech → Text → Analysis → Diagram Selection → Code Generation → Visual Output
-   ```
+**It's not just AI — it's cognitive architecture.**
 
-### 🏗️ **Modular Development Strategy**
+Our system thinks like a senior engineer. It doesn't keyword-match. It understands how systems behave, how components interact, and what diagram best captures the logic.
 
-Our approach focuses on **independent, modular components** that can be developed and tested separately:
+**We're not speeding up a broken process. We're replacing it.**
 
-#### **Why Modular Development?**
-- **Independent Testing**: Each team member can test their component without waiting for others
-- **Cloud-First**: Components can be tested online (watsonx.ai) without heavy downloads
-- **Progress Tracking**: Local IDE development with GitHub commits for version control
-- **Easy Integration**: Components can be connected later without major refactoring
+TalkToTech doesn't just save time — it preserves the brilliance that happens in the room.
 
-#### **Project Structure**
-```
-talk-to-tech-ibm/
-├── components/
-│   ├── speech_to_text/          # Ahmed Dabour
-│   │   ├── granite_speech.py
-│   │   ├── test_speech.py
-│   │   └── README.md
-│   ├── diagram_selector/        # Hatem Soliman
-│   │   ├── granite_reasoning.py
-│   │   ├── diagram_classifier.py
-│   │   ├── test_classifier.py
-│   │   └── README.md
-│   ├── code_generator/          # Salma Tarek Soliman
-│   │   ├── granite_code.py
-│   │   ├── uml_generator.py
-│   │   ├── test_generator.py
-│   │   └── README.md
-│   ├── diagram_renderer/        # Layla Khaled
-│   │   ├── plantuml_renderer.py
-│   │   ├── diagram_templates.py
-│   │   ├── test_renderer.py
-│   │   └── README.md
-│   └── vision_processor/        # Yasmeen Tarek
-│       ├── granite_vision.py
-│       ├── image_analyzer.py
-│       ├── test_vision.py
-│       └── README.md
-├── integration/
-│   ├── orchestrator.py          # Main workflow coordinator
-│   ├── api_connector.py         # watsonx.ai API management
-│   └── test_integration.py
-├── data/
-│   ├── sample_meetings/         # Test meeting transcripts
-│   ├── sample_diagrams/         # Expected outputs
-│   └── config/
-│       └── watsonx_config.json  # API credentials (gitignored)
-├── docs/
-│   ├── api_documentation.md
-│   ├── setup_guide.md
-│   └── testing_guide.md
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
+---
 
-#### **Development Workflow**
-1. **Independent Development**: Each team member works on their component
-2. **Cloud Testing**: Use watsonx.ai Prompt Lab for AI model testing
-3. **Local Development**: Write code in local IDE with minimal dependencies
-4. **GitHub Tracking**: Regular commits to track progress
-5. **Integration Testing**: Connect components when ready
+## 🏗️ Technical Architecture
+
+### Backend (Python + Flask)
+Our modular AI pipeline reflects the technical workflow:
+
+- **`diagram_selector`** - Takes raw transcript and uses Granite Instruct to output JSON with chosen diagram type and summary
+- **`diagram_to_code`** - Uses Granite Code to generate PlantUML syntax from the JSON
+- **`meeting_to_diagram`** - Renders PlantUML into SVG images
+- **Decoupled architecture** - Connects specialized Granite models in a seamless workflow
+
+### Frontend (React + Vite)
+Single-page application providing a clean UI for the powerful backend:
+- Audio file upload interface
+- Real-time display of AI-generated summaries
+- Dynamic SVG diagram rendering
+- Intuitive, responsive user experience
+
+### IBM Granite Integration
+
+TalkToTech uses a streamlined pipeline powered entirely by IBM's **granite-3.3-8b-instruct** model:
+
+1. **Transcription**: Uses `incredibly-fast-whisper` model (due to IBM Granite Speech's absence on Replicate) to convert spoken audio into text
+2. **Understanding & Summarization**: Granite summarizes the transcript, extracts keywords, and assigns a fitting title
+3. **Diagram Selection**: Based on relational/process cues, Granite identifies the best diagram type (e.g., sequence, class, architecture)
+4. **UML and Code Generation**: Granite Code generates the chosen UML diagram(s) and their corresponding code in the best applicable programming language
+
+---
+
+## 👥 Our Team
+
+All team members are students at the **German University in Cairo** in the **Media Engineering and Technology Faculty**, **Computer Science and Engineering major**:
+
+* **Salma Tarek Soliman** - Computer Science & Engineering Student
+* **Ahmed Dabour** - Computer Science & Engineering Student
+* **Hatem Soliman** - Computer Science & Engineering Student
+* **Yasmeen Tarek** - Computer Science & Engineering Student
+* **Layla Khaled** - Computer Science & Engineering Student
 
 ---
 
 ## 🛠️ Technologies Used
 
-* **IBM Granite Models:** Leveraging their capabilities for text generation, reasoning, summarization, and potentially speech-to-text.
-* **IBM watsonx.ai:** The cloud-based platform for accessing and experimenting with Granite models via Prompt Lab, API, and SDK.
-* **[Potentially] Open-source platforms:** Such as Hugging Face for model access, Ollama for local inference, or the BeeAI Agentic Framework for building intelligent agents.
-* *(Add any other specific tools, frameworks, or programming languages relevant to your project, e.g., Python, LangChain, etc.)*
+* **IBM Granite Models**: Leveraging their capabilities for text generation, reasoning, summarization, and speech-to-text
+* **IBM watsonx.ai**: Cloud-based platform for accessing and experimenting with Granite models
+* **Python & Flask**: Backend API development
+* **React & Vite**: Frontend single-page application
+* **PlantUML**: Diagram generation and rendering
+* **Incredibly Fast Whisper**: Speech-to-text transcription
 
 ---
 
 ## 📝 Getting Started
 
-To explore or run components of this project:
-
 ### Prerequisites
 
-* Familiarity with **IBM Granite models** and their applications.
-* Understanding of **IBM watsonx.ai** for cloud-based model interaction.
-* Basic concepts of **AI automation** and **Large Language Models (LLMs)**.
-* *(Specify any required programming languages or development environments.)*
+* Python 3.8+
+* Node.js 16+
+* Familiarity with IBM Granite models and their applications
+* Understanding of IBM watsonx.ai for cloud-based model interaction
 
 ### Installation & Setup
 
-*(Provide clear instructions on how to set up and run your specific solution. This might include API key configuration, environment variables, and dependency installation.)*
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/CodeNKoffee/talktotech-ai.git
+   cd talktotech-ai
+   ```
 
-For general hackathon guidelines on using IBM Granite, please refer to the **AI & Automation Unpacked Hackathon Guide PDF**. This guide covers:
+2. **Backend Setup**
+   ```bash
+   cd components
+   pip install -r requirements.txt
+   ```
 
-* Accessing Granite models on Hugging Face or via Ollama for local execution.
-* Using IBM watsonx.ai's Prompt Lab and programmatic access (API/SDK).
-* System requirements for local model inference (e.g., 32 GB RAM, GPU).
+3. **Frontend Setup**
+   ```bash
+   cd my-app
+   npm install
+   npm run dev
+   ```
+
+4. **Configure IBM Granite API**
+   - Set up your IBM watsonx.ai credentials
+   - Configure API keys in the appropriate configuration files
+
+For detailed setup instructions, please refer to the **AI & Automation Unpacked Hackathon Guide PDF**.
 
 ---
 
 ## 💡 Use Cases Addressed
 
-*(Based on your team's project, briefly describe the specific business process or industry challenge your solution aims to automate or improve. Referencing the example use cases from the hackathon guide, such as "Smart Meeting Summarizer" or "AI Workflow Orchestrator," can be helpful.)*
+TalkToTech addresses the universal challenge of **capturing and preserving technical meeting insights**:
+
+* **Software Architecture Meetings**: Convert architectural discussions into UML diagrams
+* **System Design Sessions**: Transform design conversations into sequence and class diagrams
+* **Database Planning**: Turn database discussions into ER diagrams
+* **API Design Meetings**: Convert API planning into interface diagrams
+* **Process Workflow Discussions**: Transform process descriptions into activity diagrams
 
 ---
 
@@ -151,10 +156,10 @@ For general hackathon guidelines on using IBM Granite, please refer to the **AI 
 
 In adherence to the hackathon guidelines, all data used in this project complies with responsible AI practices. We have ensured:
 
-* No company confidential or unauthorized data.
-* No client data or Personally Identifiable Information (PI).
-* No data obtained from social media.
-* Publicly available data, where terms permit commercial use, is documented.
+* No company confidential or unauthorized data
+* No client data or Personally Identifiable Information (PI)
+* No data obtained from social media
+* Publicly available data, where terms permit commercial use, is documented
 
 ---
 
@@ -163,8 +168,8 @@ In adherence to the hackathon guidelines, all data used in this project complies
 * [IBM Granite Official Page](https://www.ibm.com/granite)
 * [IBM Granite Documentation (IBM Developer)](https://developer.ibm.com/components/granite-models/)
 * [IBM watsonx.ai Platform](https://dataplatform.cloud.ibm.com/wx/home?context=wx)
-* [BeeAI Agentic Framework GitHub (if used)](https://github.com/IBM/BeeAI)
-* *(Add links to any other significant external resources or documentation relevant to your specific implementation.)*
+* [PlantUML Documentation](https://plantuml.com/)
+* [Incredibly Fast Whisper](https://github.com/SYSTRAN/faster-whisper)
 
 ---
 
@@ -193,3 +198,5 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---
+
+*Developed for IBM AI & Automation Unpacked Hackathon at IBM TechXchange 2025*
