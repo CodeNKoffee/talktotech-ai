@@ -1,9 +1,3 @@
-"""
-Simple Diagram Classifier
-Developer: Hatem Soliman
-Purpose: Analyze meeting transcripts and determine diagram types
-"""
-
 import json
 import replicate
 

@@ -1,9 +1,5 @@
 # Diagram Classifier
 
-**Developer:** Hatem Soliman  
-**Component:** Diagram Classification  
-**Purpose:** Analyze meeting transcripts and suggest diagram types using IBM Granite AI
-
 ## Overview
 
 This component analyzes meeting transcripts using IBM Granite 3.3 8B Instruct model to intelligently determine the most appropriate diagram types for visualization. It goes beyond simple keyword matching to understand context and relationships in technical discussions.

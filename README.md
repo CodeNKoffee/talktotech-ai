@@ -54,6 +54,7 @@ TalkToTech doesn't just save time — it preserves the brilliance that happens i
 ## 🏗️ Technical Architecture
 
 ### Backend (Python + Flask)
+
 Our modular AI pipeline reflects the technical workflow:
 
 - **`diagram_selector`** - Takes raw transcript and uses Granite Instruct to output JSON with chosen diagram type and summary
@@ -62,7 +63,9 @@ Our modular AI pipeline reflects the technical workflow:
 - **Decoupled architecture** - Connects specialized Granite models in a seamless workflow
 
 ### Frontend (React + Vite)
+
 Single-page application providing a clean UI for the powerful backend:
+
 - Audio file upload interface
 - Real-time display of AI-generated summaries
 - Dynamic SVG diagram rendering
@@ -114,18 +117,21 @@ All team members are students at the **German University in Cairo** in the **Med
 ### Installation & Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/CodeNKoffee/talktotech-ai.git
    cd talktotech-ai
    ```
 
 2. **Backend Setup**
+
    ```bash
    cd components
    pip install -r requirements.txt
    ```
 
 3. **Frontend Setup**
+
    ```bash
    cd my-app
    npm install
@@ -177,7 +183,7 @@ In adherence to the hackathon guidelines, all data used in this project complies
 
 MIT License
 
-Copyright (c) 2024 TalkToTech Team
+Copyright (c) 2025 TalkToTech Team
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
