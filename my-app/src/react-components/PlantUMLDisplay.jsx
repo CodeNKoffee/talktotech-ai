@@ -11,6 +11,7 @@ import DiagramTabs from './DiagramTabs';
 const PlantUMLDisplay = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { meeting, diagrams } = location.state || {};
   const [showSummary, setShowSummary] = useState(false);
   const [showCodePopup, setShowCodePopup] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -145,12 +146,11 @@ admin --> UC5
   ];
   
   // Get data from navigation state, fallback to mock data if not available
-  const summaryData = location.state || {
-    title: "Team Meeting Discussion",
-    summary: "**Meeting Overview**: \n- Discussed project roadmap and timeline\n- Reviewed current sprint progress\n- Identified blockers and dependencies\n\n**Key Decisions**: \n- Move deadline to next Friday\n- Assign additional resources to backend team\n- Schedule follow-up meeting for Thursday",
-    keywords: "meeting, roadmap, sprint, blockers, deadline",
-    outputDiagram: "Class Diagram, Sequence Diagram",
-    duration: "15:32"
+  const summaryData = {
+    title: meeting.title,
+    summary: meeting.summary_text,
+    keywords: meeting.keywords,
+    outputDiagram: meeting.outputDiagram,
   };
 
   // Format duration properly if it's a number (seconds)
@@ -190,7 +190,7 @@ admin --> UC5
   };
 
   // Get current diagram data
-  const currentDiagram = diagramTypes[activeTab];
+  const currentDiagram = diagrams[activeTab];
 
   return (
     <div className="plantuml-display">
@@ -220,7 +220,7 @@ admin --> UC5
         <div className="panels-grid">
           {/* PDF/SVG Panel */}
           <div className="pdf-svg-section">
-            <PDFSVGPanel diagramType={currentDiagram.type} />
+            <PDFSVGPanel diagramType={currentDiagram.diagram_type} link={currentDiagram.svg_file} />
           </div>
 
           {/* Generate Code Button */}
@@ -230,7 +230,7 @@ admin --> UC5
 
           {/* PlantUML Code Panel */}
           <div className="plantuml-code-section">
-            <PlantUMLCodePanel code={currentDiagram.plantUMLCode} diagramType={currentDiagram.type} />
+            <PlantUMLCodePanel code={currentDiagram.plantuml_code} diagramType={currentDiagram.diagram_type} />
           </div>
         </div>
       </div>
@@ -239,8 +239,8 @@ admin --> UC5
       <CodePopup 
         isOpen={showCodePopup} 
         onClose={handleCloseCodePopup}
-        language="Java"
-        code={currentDiagram.javaCode}
+        language={currentDiagram.real_code_language}
+        code={currentDiagram.real_code}
       />
     </div>
   );

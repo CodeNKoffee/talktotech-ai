@@ -1,52 +1,9 @@
 import React from 'react';
 import './CodePopup.css';
 
-const CodePopup = ({ isOpen, onClose, language = "Java" }) => {
+const CodePopup = ({ isOpen, onClose, language , code}) => {
   const [copied, setCopied] = React.useState(false);
-  const placeholderJavaCode = `public class UserManager {
-    private List<User> users;
-    private DatabaseConnection dbConnection;
-    
-    public UserManager() {
-        this.users = new ArrayList<>();
-        this.dbConnection = DatabaseFactory.createConnection();
-    }
-    
-    public void addUser(User user) {
-        if (user != null && isValidUser(user)) {
-            users.add(user);
-            dbConnection.save(user);
-            System.out.println("User added successfully: " + user.getName());
-        } else {
-            throw new IllegalArgumentException("Invalid user data");
-        }
-    }
-    
-    public User findUserById(String userId) {
-        return users.stream()
-                   .filter(user -> user.getId().equals(userId))
-                   .findFirst()
-                   .orElse(null);
-    }
-    
-    private boolean isValidUser(User user) {
-        return user.getName() != null && 
-               user.getEmail() != null && 
-               user.getEmail().contains("@");
-    }
-    
-    public void removeUser(String userId) {
-        User userToRemove = findUserById(userId);
-        if (userToRemove != null) {
-            users.remove(userToRemove);
-            dbConnection.delete(userId);
-        }
-    }
-    
-    public List<User> getAllUsers() {
-        return new ArrayList<>(users);
-    }
-}`;
+  const placeholderJavaCode = code
 
   const copyToClipboard = async () => {
     try {

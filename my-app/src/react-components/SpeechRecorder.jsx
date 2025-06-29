@@ -13,6 +13,7 @@ const SpeechRecorder = () => {
   const [finalRecordingTime, setFinalRecordingTime] = useState(0);
   const [title, setTitle] = useState("");
   const [meeting,setMeeting] = useState(null)
+  const [diagrams, setDiagrams] = useState(null)
   const [summary, setSummary] = useState("");
   const [outputDiagram, setOutputDiagram] = useState("");
   const [keywords, setKeywords] = useState([]);
@@ -78,6 +79,7 @@ const SpeechRecorder = () => {
         });
         if (response.ok) {
           const data = await response.json();
+          setMeeting(data)
           // Simulate progressive loading of each field
           // In real implementation, this would come from backend streaming/webhooks
           setTimeout(() => {
@@ -157,7 +159,7 @@ const SpeechRecorder = () => {
       body: formData
     });
     const data = await response2.json();
-    console.log(data)
+    setDiagrams(data.diagrams)
   }
 
   const handleRecordClick = () => {
@@ -188,11 +190,8 @@ const SpeechRecorder = () => {
     // Navigate to PlantUML display screen with summary data
     navigate('/plantuml', {
       state: {
-        title,
-        summary,
-        keywords,
-        outputDiagram,
-        duration: finalRecordingTime
+        meeting: meeting,
+        diagrams: diagrams
       }
     });
   };
@@ -435,12 +434,15 @@ const SpeechRecorder = () => {
 
         {/* Generate UML Button   btn , circle, arrow, text */}
         {hasRecorded && !isRecording && !isProcessing && (
+          <>
           <button className="generate-uml-container" onClick={handleCLick2}> 
-            <span className="circle-button" onClick={handleGenerateUML}>
+            <span className="circle-button" >
               <span className="circle-arrow"></span>
             </span>
             <span className="button-text">Generate UML diagram(s)</span>
           </button>
+          <button onClick={handleGenerateUML}>GO TO PAGE</button>
+          </>
         )}
       </div>
     </div>
