@@ -10,6 +10,7 @@ const SpeechRecorder = () => {
   const [showSummary, setShowSummary] = useState(false);
   const [finalRecordingTime, setFinalRecordingTime] = useState(0);
   const [title, setTitle] = useState("");
+  const [meeting,setMeeting] = useState(null)
   const [summary, setSummary] = useState("");
   const [outputDiagram, setOutputDiagram] = useState("");
   const [keywords, setKeywords] = useState([]);
@@ -75,6 +76,7 @@ const SpeechRecorder = () => {
         });
         if (response.ok) {
           const data = await response.json();
+          setMeeting(data)
           
           // Simulate progressive loading of each field
           // In real implementation, this would come from backend streaming/webhooks
@@ -146,6 +148,17 @@ const SpeechRecorder = () => {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
   };
+
+  const handleCLick2 = async () => {
+    const formData = new FormData();
+    formData.append("meeting", JSON.stringify(meeting));
+    const response2 = await fetch("http://127.0.0.1:5000/generate", {
+      method: "POST",
+      body: formData
+    });
+    const data = await response2.json();
+    console.log(data)
+  }
 
   const handleRecordClick = () => {
     if (isRecording) {
@@ -389,7 +402,7 @@ const SpeechRecorder = () => {
 
         {/* Generate UML Button   btn , circle, arrow, text */}
         {hasRecorded && !isRecording && !isProcessing && (
-          <button className="generate-uml-container"> 
+          <button className="generate-uml-container" onClick={handleCLick2}> 
             <span className="circle-button" onClick={handleGenerateUML}>
               <span className="circle-arrow"></span>
             </span>

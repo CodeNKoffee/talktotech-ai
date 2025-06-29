@@ -15,11 +15,12 @@ class GranitePlantUMLGenerator:
     def __init__(self):
         """Initialize the Granite Code LLM for PlantUML generation"""
         load_dotenv()
-        REPLICATE_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+        REPLICATE_TOKEN = "r8_UFdwKaSNK8dV7EN1lqccgQCtjJNxhYt2mJ6No"
         if not REPLICATE_TOKEN:
             raise ValueError("REPLICATE_API_TOKEN environment variable is not set")
         
         # store the client 
+        
         self.replicate_client = replicate.Client(api_token=REPLICATE_TOKEN)
         
         # Initialize the processor
