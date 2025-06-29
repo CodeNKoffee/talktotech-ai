@@ -48,8 +48,8 @@ def upload():
   # 4. Generate PlantUML Code
   print("🛠️ Step 4: Generating PlantUML code...")
   try:
-    # Add paths for meeting-to-diagram components
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting-to-diagram'))
+    # Add paths for meeting_to_diagram components
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting_to_diagram'))
     from plantuml_generator import GranitePlantUMLGenerator
     
     # Initialize PlantUML generator
@@ -71,7 +71,7 @@ def upload():
     svg_result = None
     if plantuml_code:
       print("📊 Step 5: Generating SVG diagram...")
-      sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting-to-diagram'))
+      sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting_to_diagram'))
       from svg_converter import SVGConverter
 
       # Initialize SVG converter
@@ -106,7 +106,7 @@ def upload():
         print(f"📝 Generating {supported_type} code...")
         try:
           import importlib.util
-          spec = importlib.util.spec_from_file_location("granite_diagram_to_code", os.path.join(os.path.dirname(__file__), 'diagram-to-code', 'granite-diagram-to-code.py'))
+          spec = importlib.util.spec_from_file_location("granite_diagram_to_code", os.path.join(os.path.dirname(__file__), 'diagram_to_code', 'granite_diagram_to_code.py'))
           granite_module = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(granite_module)
           GraniteCodeGenerator = granite_module.GraniteCodeGenerator

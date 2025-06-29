@@ -137,8 +137,8 @@ def test_plantuml_generation(meeting_data):
         return None
     
     try:
-        # Add paths for meeting-to-diagram components
-        sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting-to-diagram'))
+        # Add paths for meeting_to_diagram components
+        sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting_to_diagram'))
         
         from plantuml_generator import GranitePlantUMLGenerator
         
@@ -165,7 +165,7 @@ def test_svg_generation(plantuml_code, title="Test Meeting Diagram"):
         print_result(False, "No PlantUML code available for SVG generation")
         return None
     
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting-to-diagram'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting_to_diagram'))
     from svg_converter import SVGConverter
 
     print(f"\n📊 Generating SVG diagram for: {title}")
@@ -223,7 +223,7 @@ def test_real_code_generation(plantuml_code, diagram_types):
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "granite_diagram_to_code", 
-            os.path.join(os.path.dirname(__file__), 'diagram-to-code', 'granite-diagram-to-code.py')
+            os.path.join(os.path.dirname(__file__), 'diagram_to_code', 'granite_diagram_to_code.py')
         )
         granite_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(granite_module)
