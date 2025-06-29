@@ -1,15 +1,19 @@
 """
-Modular PlantUML Generator using IBM Granite Code model.
-Generates UML diagrams from meeting transcripts using AI with enhanced error handling.
+Simplified PlantUML Generator using IBM Granite Code model.
+Generates UML diagrams from meeting transcripts using AI with basic cleaning and validation.
 """
 import os
 import replicate
-from plantuml_utils import generate_plantuml_with_error_handling, PlantUMLProcessor, create_error_handler
+from plantuml_utils import (
+    generate_plantuml_simple, 
+    PlantUMLProcessor, 
+    create_plantuml_processor
+)
 from dotenv import load_dotenv
 
 class GranitePlantUMLGenerator:
     def __init__(self):
-        """Initialize the Granite Code LLM for PlantUML generation with enhanced error handling"""
+        """Initialize the Granite Code LLM for PlantUML generation"""
         load_dotenv()
         REPLICATE_TOKEN = os.getenv("REPLICATE_API_TOKEN")
         if not REPLICATE_TOKEN:
@@ -18,9 +22,8 @@ class GranitePlantUMLGenerator:
         # store the client 
         self.replicate_client = replicate.Client(api_token=REPLICATE_TOKEN)
         
-        # Initialize the enhanced processor
+        # Initialize the processor
         self.processor = PlantUMLProcessor()
-        self.error_handler = create_error_handler()
     
     def _ai_generate_func(self, prompt: str) -> str:
         """Internal function to call the Granite Code model with a prompt"""
@@ -32,7 +35,7 @@ class GranitePlantUMLGenerator:
     
     def generate_plantuml(self, transcript, diagram_type, keywords=None, summary=""):
         """
-        Generate PlantUML syntax using enhanced error handling and processing.
+        Generate PlantUML syntax with basic cleaning and validation.
         
         Parameters:
         - transcript (str): Transcribed text describing the system or process.
@@ -47,8 +50,8 @@ class GranitePlantUMLGenerator:
             keywords = []
             
         try:
-            # Use enhanced error handling function
-            result = generate_plantuml_with_error_handling(
+            # Use simple generation function
+            result = generate_plantuml_simple(
                 diagram_type=diagram_type,
                 transcript=transcript,
                 summary=summary,
@@ -59,15 +62,15 @@ class GranitePlantUMLGenerator:
             # Print status for user feedback
             if not result['success']:
                 print(f"Warning: {result['status_message']}")
+            else:
+                print(f"Success: Generated PlantUML - {result['status_message']}")
             
             return result
             
         except Exception as e:
             print(f"Error generating PlantUML with Granite Code: {str(e)}")
-            # Return fallback result
-            fallback_code = self.processor.get_fallback_diagram(diagram_type, transcript[:100])
             return {
-                'plantuml_code': fallback_code,
+                'plantuml_code': "",
                 'success': False,
                 'is_valid': True,  # Fallback is always valid
                 'status_message': f"Exception occurred: {str(e)[:100]}",
@@ -76,7 +79,7 @@ class GranitePlantUMLGenerator:
                 'used_fallback': True
             }
     
-    def generate_plantuml_simple(self, transcript, diagram_type, keywords=None, summary=""):
+    def generate_plantuml_code_only(self, transcript, diagram_type, keywords=None, summary=""):
         """
         Simple interface that returns just the PlantUML code (for backward compatibility).
         """
@@ -84,18 +87,23 @@ class GranitePlantUMLGenerator:
         return result['plantuml_code']
     
     def generate_from_meeting(self, meeting):
-        """Generate PlantUML from a meeting object with enhanced processing"""
+        """
+        Generate PlantUML from a meeting object.
+        
+        Args:
+            meeting: Meeting dictionary with transcript, diagram type, keywords, etc.
+        """
         result = self.generate_plantuml(
             transcript=meeting["transcript"],
             diagram_type=meeting["output_diagram"],
             keywords=meeting["keywords"],
-            summary=meeting.get("summary", "")  # Use summary if available
+            summary=meeting.get("summary", "")
         )
         return result
     
     def batch_process_meetings(self, meeting_list):
         """
-        Process multiple meetings with enhanced error handling.
+        Process multiple meetings.
         
         Args:
             meeting_list: List of meeting dictionaries

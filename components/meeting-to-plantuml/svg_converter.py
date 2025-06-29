@@ -80,29 +80,10 @@ class SVGConverter:
                 print(f"Warning: Failed to start JVM: {str(e)}")
                 self.jvm_started = False
 
-    def validate_plantuml(self, code: str) -> bool:
-        """Basic validation of PlantUML code."""
-        code = code.strip()
-        if not code:
-            return False
-        if "@startuml" not in code.lower():
-            return False
-        if "@enduml" not in code.lower():
-            return False
-        return True
-
     def convert_to_svg(self, plantuml_code: str) -> dict:
         """Convert PlantUML code to SVG format using multiple fallback methods."""
         output_file = os.path.join(self.output_dir, "diagram.svg")
         os.makedirs(self.output_dir, exist_ok=True)  # Ensure output directory exists
-
-        if not self.validate_plantuml(plantuml_code):
-            return {
-                "success": False,
-                "output_file": "",
-                "svg_content": "",
-                "errors": ["Invalid PlantUML code: Missing @startuml or @enduml"]
-            }
 
         # Method 1: Try JPype with PlantUML JAR (if available)
         result = self._convert_with_jpype(plantuml_code, output_file)
@@ -113,12 +94,7 @@ class SVGConverter:
         result = self._convert_with_java_command(plantuml_code, output_file)
         if result["success"]:
             return result
-
-        # Method 3: Try online PlantUML server as last resort
-        result = self._convert_with_online_server(plantuml_code, output_file)
-        if result["success"]:
-            return result
-
+        
         return {
             "success": False,
             "output_file": "",
@@ -194,37 +170,6 @@ class SVGConverter:
                 
         except Exception as e:
             return {"success": False, "errors": [f"Java command conversion failed: {str(e)}"]}
-
-    def _convert_with_online_server(self, plantuml_code: str, output_file: str) -> dict:
-        """Convert using PlantUML online server as last resort."""
-        try:
-            import base64
-            import zlib
-            
-            # Encode PlantUML code for URL
-            compressed = zlib.compress(plantuml_code.encode('utf-8'))
-            encoded = base64.b64encode(compressed).decode('ascii')
-            
-            # Use PlantUML online server
-            url = f"http://www.plantuml.com/plantuml/svg/{encoded}"
-            
-            print(f"Attempting to use online PlantUML server...")
-            response = urllib.request.urlopen(url, timeout=10)
-            svg_content = response.read().decode('utf-8')
-            
-            # Save to file
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(svg_content)
-                
-            return {
-                "success": True,
-                "output_file": output_file,
-                "svg_content": svg_content,
-                "errors": []
-            }
-            
-        except Exception as e:
-            return {"success": False, "errors": [f"Online server conversion failed: {str(e)}"]}
 
     def __del__(self):
         """Shutdown JVM when the object is destroyed."""
