@@ -1,8 +1,9 @@
 import replicate
+import os
 
 # Using the new token provided by the user for all Replicate calls.
-# Dabour's token
-replicate_client = replicate.Client(api_token="r8_UFdwKaSNK8dV7EN1lqccgQCtjJNxhYt2mJ6No")
+# Hatem's token
+replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
 def transcribe_audio(path):
     with open(path, "rb") as audio:

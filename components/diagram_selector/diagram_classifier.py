@@ -1,12 +1,9 @@
 import json
 import replicate
+import os
 
 # Per user instruction, use the Replicate client with a hardcoded token.
-# Dabour's token
-replicate_client = replicate.Client(api_token="r8_UFdwKaSNK8dV7EN1lqccgQCtjJNxhYt2mJ6No")
-
-# Hatem's token
-# replicate_client = replicate.Client(api_token="r8_ZuNi8fo4buhXhahu9G0487TZ5ZXE3Tf3csKRW")
+replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
 # Simple in-memory counter that resets with the Python process (i.e. the
 # browser session described by the user).  The first call returns

@@ -18,11 +18,9 @@ CORS(app, origins="*", allow_headers="*", methods="*")
 
 
 # Replicate client setup
-# Dabour's token
-# replicate_client = replicate.Client(api_token="r8_UFdwKaSNK8dV7EN1lqccgQCtjJNxhYt2mJ6No")
 
 # Hatem's token
-# replicate_client = replicate.Client(api_token="r8_ZuNi8fo4buhXhahu9G0487TZ5ZXE3Tf3csKRW")
+replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
 @app.route("/")
 def index():

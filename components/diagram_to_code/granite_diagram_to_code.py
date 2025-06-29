@@ -16,7 +16,8 @@ class GraniteCodeGenerator:
         import replicate
         
         load_dotenv()
-        self.replicate_token = "r8_UFdwKaSNK8dV7EN1lqccgQCtjJNxhYt2mJ6No"
+        # Hatem's token
+        self.replicate_token = os.getenv("REPLICATE_API_TOKEN")
         
         if not self.replicate_token:
             raise ValueError("REPLICATE_API_TOKEN environment variable is not set")
