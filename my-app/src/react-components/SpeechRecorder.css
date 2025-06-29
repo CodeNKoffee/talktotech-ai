@@ -325,16 +325,18 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid rgba(135, 206, 235, 0.2);
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid rgba(135, 206, 235, 0.25);
 }
 
 .summary-header h3 {
   margin: 0;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 18px;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.98);
+  font-size: 20px;
+  font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.3px;
 }
 
 .summary-close {
@@ -360,7 +362,7 @@ body {
 }
 
 .summary-content {
-  padding: 20px 24px 24px;
+  padding: 24px 28px 28px;
   overflow-y: auto;
   flex: 1;
   scrollbar-width: thin;
@@ -391,30 +393,114 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
-  gap: 12px;
+  margin-bottom: 20px;
+  gap: 16px;
   min-height: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .summary-item:last-child {
   margin-bottom: 0;
+  border-bottom: none;
 }
 
 .summary-label {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.75);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   flex-shrink: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 80px;
 }
 
 .summary-value {
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.98);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   text-align: left;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   flex: 1;
+  line-height: 1.5;
+  word-wrap: break-word;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Formatted Summary Styles */
+.summary-value.formatted-summary {
+  line-height: 1.8;
+  max-height: none; /* Remove individual max-height since parent has scroll */
+  overflow: visible; /* Let parent handle scroll */
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 8px;
+}
+
+.summary-section-header {
+  font-weight: 700;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.98);
+  margin: 12px 0 8px 0;
+  text-transform: none;
+  letter-spacing: 0px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+}
+
+.summary-section-content {
+  font-weight: 400;
+  margin-bottom: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+
+.summary-important-point {
+  font-weight: 600;
+  color: #ffffff;
+  margin: 4px 0;
+}
+
+/* Special styling for different summary fields */
+.summary-item:nth-child(3) .summary-value:not(.formatted-summary) {
+  /* Only apply scroll to non-formatted summary - formatted ones use parent scroll */
+  max-height: 80px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(135, 206, 235, 0.3) rgba(255, 255, 255, 0.05);
+}
+
+.summary-item:nth-child(3) .summary-value:not(.formatted-summary)::-webkit-scrollbar {
+  width: 4px;
+}
+
+.summary-item:nth-child(3) .summary-value:not(.formatted-summary)::-webkit-scrollbar-track {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.summary-item:nth-child(3) .summary-value:not(.formatted-summary)::-webkit-scrollbar-thumb {
+  background: rgba(135, 206, 235, 0.3);
+  border-radius: 10px;
+}
+
+/* Keywords styling */
+.summary-item:nth-child(4) .summary-value {
+  /* Keywords field - add some visual separation */
+  font-weight: 600;
+}
+
+/* Duration field styling */
+.summary-item:first-child .summary-value {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-weight: 700;
+  color: rgba(135, 206, 235, 0.95);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Loading Skeleton Styles */
