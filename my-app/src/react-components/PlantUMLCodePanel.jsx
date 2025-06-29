@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PlantUMLCodePanel = () => {
+const PlantUMLCodePanel = ({ code, diagramType }) => {
   const placeholderCode = `@startuml
 class ClassName {
   -attribute1: Type
@@ -19,11 +19,11 @@ ClassName --> AnotherClass : association
   return (
     <div className="plantuml-code-container">
       <div className="panel-header">
-        <h3>PlantUML Code</h3>
+        <h3>{diagramType ? `${diagramType} PlantUML Code` : 'PlantUML Code'}</h3>
       </div>
       <div className="code-editor">
         <pre className="code-content">
-          <code>{placeholderCode}</code>
+          <code>{code || placeholderCode}</code>
         </pre>
       </div>
     </div>

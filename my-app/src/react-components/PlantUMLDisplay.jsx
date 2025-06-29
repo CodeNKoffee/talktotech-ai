@@ -230,7 +230,7 @@ admin --> UC5
 
           {/* PlantUML Code Panel */}
           <div className="plantuml-code-section">
-            <PlantUMLCodePanel code={currentDiagram.plantUMLCode} />
+            <PlantUMLCodePanel code={currentDiagram.plantUMLCode} diagramType={currentDiagram.type} />
           </div>
         </div>
       </div>
