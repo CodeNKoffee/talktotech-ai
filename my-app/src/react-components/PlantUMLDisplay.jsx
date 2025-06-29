@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './PlantUMLDisplay.css';
 import SummaryButton from './SummaryButton';
 import GenerateCodeButton from './GenerateCodeButton';
@@ -9,6 +9,7 @@ import CodePopup from './CodePopup';
 
 const PlantUMLDisplay = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [showSummary, setShowSummary] = useState(false);
   const [showCodePopup, setShowCodePopup] = useState(false);
   
@@ -49,8 +50,20 @@ const PlantUMLDisplay = () => {
     setShowCodePopup(false);
   };
 
+  const handleGoBack = () => {
+    navigate('/');
+  };
+
   return (
     <div className="plantuml-display">
+      {/* Back Button */}
+      <button className="back-button" onClick={handleGoBack}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        Back
+      </button>
+
       {/* Summary Button */}
       <SummaryButton 
         onToggle={toggleSummary}
