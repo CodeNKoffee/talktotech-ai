@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import GlassyButton from './GlassyButton';
 import './SpeechRecorder.css';
 
 const SpeechRecorder = () => {
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasRecorded, setHasRecorded] = useState(false);
@@ -172,8 +174,8 @@ const SpeechRecorder = () => {
   };
 
   const handleGenerateUML = () => {
-    // This will later integrate with backend
-    console.log('Generate UML diagrams clicked');
+    // Navigate to PlantUML display screen
+    navigate('/plantuml');
   };
 
   const toggleSummary = () => {
@@ -196,22 +198,40 @@ const SpeechRecorder = () => {
 
   // Format summary text to separate sections
   const formatSummaryText = (text) => {
+    console.log('Input text:', text);
+    
     if (!text) return text;
     
-    // Split by **Section Name**: pattern
-    const sections = text.split(/(?=- \*\*[^*]+\*\*:)/);
+    // Handle simple text without formatting
+    if (!text.includes('**')) {
+      return (
+        <div className="formatted-summary-content">
+          <div className="summary-simple-text">{text}</div>
+        </div>
+      );
+    }
+    
+    // Split by **Section Name**: pattern (without leading dash)
+    const sections = text.split(/(?=\*\*[^*]+\*\*:)/);
+    console.log('Sections found:', sections);
     
     return (
       <div className="formatted-summary-content">
         {sections.map((section, index) => {
           if (!section.trim()) return null;
           
-          // Extract section header
-          const headerMatch = section.match(/- \*\*([^*]+)\*\*:/);
-          if (!headerMatch) return null;
+          // Extract section header (without leading dash)
+          const headerMatch = section.match(/\*\*([^*]+)\*\*:/);
+          if (!headerMatch) {
+            console.log('No header match for section:', section);
+            return null;
+          }
           
           const sectionTitle = headerMatch[1].trim();
           const content = section.replace(headerMatch[0], '').trim();
+          
+          console.log('Section title:', sectionTitle);
+          console.log('Section content:', content);
           
           // Split content by bullet points (- )
           const bulletPoints = content.split(/(?=\s*-\s+)/).filter(point => point.trim());
