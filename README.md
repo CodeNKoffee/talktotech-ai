@@ -4,7 +4,7 @@
 
 **Turn conversations into UML diagrams & code. From verbal ideas to technical implementation instantly.**
 
-🌐 **Live Demo:** [talktotech.vercel.app](https://talktotech.vercel.app/)  
+🌐 **Live Demo:** [https://talktotech-ai.vercel.app/](https://talktotech-ai.vercel.app/)  
 📹 **Video Demo:** [Watch our 3-minute demonstration](https://drive.google.com/file/d/1j11mzUInQ6gtEBuJ_EXZC_NRCrz9pROh/view?usp=sharing)  
 📂 **Repository:** [GitHub Repository](https://github.com/CodeNKoffee/talktotech-ai/tree/master)
 
