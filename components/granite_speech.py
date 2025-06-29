@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS, cross_origin
 import replicate
 import os
 
@@ -8,6 +9,8 @@ from transcriber import transcribe_audio
 from diagram_selector.diagram_classifier import analyze_meeting
 
 app = Flask(__name__)
+cors = CORS(app) # allow CORS for all domains on all routes.
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Replicate client setup
 # Dabour's token
@@ -21,6 +24,7 @@ def index():
   return render_template("index.html")
 
 @app.route("/upload", methods=["POST"])
+@cross_origin()
 def upload():
   # 1. Save and transcribe the uploaded audio file
   audio_file = request.files["audio"]

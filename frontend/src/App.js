@@ -1,12 +1,13 @@
-import React from "react";
-import AudioRecorder from "./AudioRecorder";
+import React from 'react'
+import SpeechRecorder from './react-components/SpeechRecorder'
+import './App.css'
 
 function App() {
   return (
-    <div>
-      <AudioRecorder />
+    <div className="App">
+      <SpeechRecorder />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
