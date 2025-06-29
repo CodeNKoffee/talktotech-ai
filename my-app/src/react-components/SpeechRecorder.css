@@ -450,6 +450,28 @@ body {
   border-radius: 8px;
   border-left: 3px solid rgba(135, 206, 235, 0.4);
   text-align: left;
+  max-height: 150px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(135, 206, 235, 0.3) rgba(255, 255, 255, 0.05);
+}
+
+.summary-section::-webkit-scrollbar {
+  width: 4px;
+}
+
+.summary-section::-webkit-scrollbar-track {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.summary-section::-webkit-scrollbar-thumb {
+  background: rgba(135, 206, 235, 0.3);
+  border-radius: 8px;
+}
+
+.summary-section::-webkit-scrollbar-thumb:hover {
+  background: rgba(135, 206, 235, 0.5);
 }
 
 .summary-section-header {
