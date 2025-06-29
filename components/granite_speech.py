@@ -42,8 +42,18 @@ def upload():
     meeting_data = analyze_meeting(transcript_text)
     print(f"✅ Meeting analyzed - Suggested diagrams: {', '.join(meeting_data.get('output_diagram', []))}")
 
-    # 4. Generate PlantUML Code
-    print("🛠️ Step 4: Generating PlantUML code...")
+    # 4. Generate PlantUML Code for All Suggested Diagrams
+    print("🛠️ Step 4: Generating PlantUML code for all suggested diagrams...")
+    
+    # Get all suggested diagram types
+    diagram_types = meeting_data.get("output_diagram", [])
+    if not isinstance(diagram_types, list):
+      diagram_types = [diagram_types]
+    
+    # Initialize containers for all results
+    all_diagrams = []
+    overall_status = "success"
+    
     try:
       # Add paths for meeting_to_diagram components
       sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting_to_diagram'))
@@ -52,81 +62,102 @@ def upload():
       # Initialize PlantUML generator
       generator = GranitePlantUMLGenerator()
       
-      # Generate PlantUML from meeting data
-      result = generator.generate_from_meeting(meeting_data)
+      # Initialize SVG converter (do this once)
+      sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting_to_diagram'))
+      from svg_converter import SVGConverter
+      svg_converter = SVGConverter()
       
-      plantuml_code = ""
-      plantuml_status = "failed"
-      if result['success']:
-        plantuml_code = result['plantuml_code']
-        plantuml_status = "success"
-        print("✅ PlantUML code generated successfully")
-      else:
-        print(f"⚠️ PlantUML generation failed: {result.get('status_message', 'Unknown error')}")
-
-      # 5. Generate SVG Diagram (optional)
-      svg_result = None
-      if plantuml_code:
-        print("📊 Step 5: Generating SVG diagram...")
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'meeting_to_diagram'))
-        from svg_converter import SVGConverter
-
-        # Initialize SVG converter
-        svg_converter = SVGConverter()
+      # Initialize real code generator (do this once)
+      import importlib.util
+      code_generator = None
+      try:
+        spec = importlib.util.spec_from_file_location("granite_diagram_to_code", os.path.join(os.path.dirname(__file__), 'diagram_to_code', 'granite_diagram_to_code.py'))
+        granite_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(granite_module)
+        GraniteCodeGenerator = granite_module.GraniteCodeGenerator
+        code_generator = GraniteCodeGenerator()
+      except Exception as e:
+        print(f"⚠️ Real code generator not available: {e}")
+      
+      # Generate diagrams for each type
+      for i, diagram_type in enumerate(diagram_types):
+        print(f"\n🎯 Generating {diagram_type} ({i+1}/{len(diagram_types)})...")
         
-        # Convert PlantUML to SVG
-        svg_result = svg_converter.convert_to_svg(plantuml_code)
+        # Create a copy of meeting data with single diagram type
+        single_diagram_meeting = meeting_data.copy()
+        single_diagram_meeting["output_diagram"] = diagram_type
         
-        if svg_result and svg_result.get('success'):
-          print("✅ SVG diagram generated successfully")
-        else:
-          print("⚠️ SVG generation failed")
-
-      # 6. Generate Real Code (if applicable)
-      real_code = None
-      real_code_language = None
-      if plantuml_code:
-        print("🔧 Step 6: Checking for real code generation...")
-        # This will print the code if applicable, but we need to capture it for the response
-        diagram_types = meeting_data.get("output_diagram", [])
-        if not isinstance(diagram_types, list):
-          diagram_types = [diagram_types]
+        # Generate PlantUML for this specific diagram type
+        result = generator.generate_plantuml(
+          transcript=meeting_data.get("transcript", transcript_text),
+          diagram_type=diagram_type,
+          keywords=meeting_data.get("keywords", []),
+          summary=summary_text
+        )
         
-        code_supported_types = ["Class Diagram", "ER Diagram"]
-        supported_type = None
-        for dtype in diagram_types:
-          if dtype in code_supported_types:
-            supported_type = dtype
-            break
+        diagram_result = {
+          "diagram_type": diagram_type,
+          "plantuml_code": "",
+          "plantuml_status": "failed",
+          "svg_content": None,
+          "svg_file": None,
+          "real_code": None,
+          "real_code_language": None,
+          "generation_details": {
+            "success": result.get("success", False),
+            "is_valid": result.get("is_valid", False),
+            "status_message": result.get("status_message", "Unknown error"),
+            "validation_errors": result.get("validation_errors", []),
+            "revision_attempts": result.get("revision_attempts", 0)
+          }
+        }
         
-        if supported_type:
-          print(f"📝 Generating {supported_type} code...")
-          try:
-            import importlib.util
-            spec = importlib.util.spec_from_file_location("granite_diagram_to_code", os.path.join(os.path.dirname(__file__), 'diagram_to_code', 'granite_diagram_to_code.py'))
-            granite_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(granite_module)
-            GraniteCodeGenerator = granite_module.GraniteCodeGenerator
+        if result['success']:
+          diagram_result["plantuml_code"] = result['plantuml_code']
+          diagram_result["plantuml_status"] = "success"
+          print(f"✅ {diagram_type} PlantUML generated successfully")
+          
+          # 5. Generate SVG for this diagram
+          if result['plantuml_code']:
+            print(f"� Generating SVG for {diagram_type}...")
+            svg_result = svg_converter.convert_to_svg(result['plantuml_code'], f"diagram_{i+1}_{diagram_type.lower().replace(' ', '_')}")
             
-            code_generator = GraniteCodeGenerator()
-            code_result = code_generator.generate_real_code_from_plantuml(plantuml_code, supported_type)
-            
-            if code_result["success"]:
-              real_code = code_result["code"]
-              real_code_language = code_result["language"]
-              print(f"✅ {real_code_language.upper()} code generated successfully")
+            if svg_result and svg_result.get('success'):
+              diagram_result["svg_content"] = svg_result.get('svg_content')
+              diagram_result["svg_file"] = svg_result.get('output_file')
+              print(f"✅ {diagram_type} SVG generated successfully")
             else:
-              print(f"⚠️ Real code generation failed: {code_result.get('error', 'Unknown error')}")
-          except Exception as e:
-            print(f"⚠️ Error during real code generation: {e}")
+              print(f"⚠️ {diagram_type} SVG generation failed")
+          
+          # 6. Generate Real Code (if applicable)
+          code_supported_types = ["Class Diagram", "ER Diagram"]
+          if diagram_type in code_supported_types and code_generator and result['plantuml_code']:
+            print(f"🔧 Generating {diagram_type} real code...")
+            try:
+              code_result = code_generator.generate_real_code_from_plantuml(result['plantuml_code'], diagram_type)
+              
+              if code_result["success"]:
+                diagram_result["real_code"] = code_result["code"]
+                diagram_result["real_code_language"] = code_result["language"]
+                print(f"✅ {diagram_result['real_code_language'].upper()} code generated for {diagram_type}")
+              else:
+                print(f"⚠️ Real code generation failed for {diagram_type}: {code_result.get('error', 'Unknown error')}")
+            except Exception as e:
+              print(f"⚠️ Error during real code generation for {diagram_type}: {e}")
+        
+        else:
+          print(f"⚠️ {diagram_type} generation failed: {result.get('status_message', 'Unknown error')}")
+          overall_status = "partial"
+        
+        # Add this diagram result to the collection
+        all_diagrams.append(diagram_result)
+      
+      print(f"\n🎯 All diagrams processed! Generated {len([d for d in all_diagrams if d['plantuml_status'] == 'success'])}/{len(diagram_types)} successfully")
 
     except ImportError as e:
       print(f"⚠️ PlantUML pipeline not available: {e}")
-      plantuml_code = ""
-      plantuml_status = "not_available"
-      svg_result = None
-      real_code = None
-      real_code_language = None
+      overall_status = "not_available"
+      all_diagrams = []
 
     print("🎯 Pipeline complete!")
 
@@ -139,19 +170,32 @@ def upload():
       "title": meeting_data.get("title"),
       "output_diagram": meeting_data.get("output_diagram"),
       "keywords": meeting_data.get("keywords"),
-      "plantuml_code": plantuml_code,
-      "plantuml_status": plantuml_status
+      "overall_status": overall_status,
+      "diagrams": all_diagrams,
+      "total_diagrams": len(all_diagrams),
+      "successful_diagrams": len([d for d in all_diagrams if d['plantuml_status'] == 'success'])
     }
     
-    # Add SVG data if available
-    if svg_result and svg_result.get('success'):
-      response_data["svg_content"] = svg_result.get('svg_content')
-      response_data["svg_file"] = svg_result.get('output_file')
-    
-    # Add real code if available
-    if real_code:
-      response_data["real_code"] = real_code
-      response_data["real_code_language"] = real_code_language
+    # For backward compatibility, add the first successful diagram's data to the root level
+    successful_diagrams = [d for d in all_diagrams if d['plantuml_status'] == 'success']
+    if successful_diagrams:
+      first_diagram = successful_diagrams[0]
+      response_data["plantuml_code"] = first_diagram["plantuml_code"]
+      response_data["plantuml_status"] = first_diagram["plantuml_status"]
+      
+      # Add SVG data if available
+      if first_diagram.get("svg_content"):
+        response_data["svg_content"] = first_diagram["svg_content"]
+        response_data["svg_file"] = first_diagram["svg_file"]
+      
+      # Add real code if available
+      if first_diagram.get("real_code"):
+        response_data["real_code"] = first_diagram["real_code"]
+        response_data["real_code_language"] = first_diagram["real_code_language"]
+    else:
+      # No successful diagrams
+      response_data["plantuml_code"] = ""
+      response_data["plantuml_status"] = "failed"
 
     return jsonify(response_data)
 
