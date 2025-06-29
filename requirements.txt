@@ -7,6 +7,7 @@ ibm-watson>=7.0.0
 
 # For diagram generation (Layla's component)
 plantuml>=0.3.0
+JPype1>=1.4.1
 
 # For testing
 pytest>=7.4.0
@@ -14,9 +15,6 @@ pytest-mock>=3.11.0
 
 # For data handling
 pandas>=2.0.0
-
-# For image processing (Yasmeen's component)
-Pillow>=10.0.0
 
 # For JSON handling
 jsonschema>=4.19.0 

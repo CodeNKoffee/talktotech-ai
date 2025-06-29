@@ -2,9 +2,73 @@
 Simplified test runner for the PlantUML Generator.
 Two core options: run by meeting ID or run by diagram type.
 """
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'diagram-to-code'))
 from plantuml_generator import GranitePlantUMLGenerator
-from plantuml_utils import PlantUMLProcessor
 from meeting_data import SAMPLE_MEETINGS, get_meeting_by_id, get_meetings_by_diagram_type, get_all_diagram_types
+from svg_converter import SVGConverter
+
+# Import GraniteCodeGenerator from the diagram-to-code module
+import importlib.util
+spec = importlib.util.spec_from_file_location("granite_diagram_to_code", os.path.join(os.path.dirname(__file__), '..', 'diagram-to-code', 'granite-diagram-to-code.py'))
+granite_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(granite_module)
+GraniteCodeGenerator = granite_module.GraniteCodeGenerator
+
+def maybe_generate_real_code(generator, meeting, result):
+    """
+    If the diagram type is UML Class Diagram or ER Diagram,
+    automatically generate and print the real code (Java or SQL).
+    """
+    diagram_type = meeting["output_diagram"]
+    if diagram_type in ["UML Class Diagram", "ER Diagram"]:
+        print("\n🛠️ Generating real code from PlantUML...")
+        code_generator = GraniteCodeGenerator()
+        code_result = code_generator.generate_real_code_from_plantuml(
+            result['plantuml_code'], 
+            diagram_type
+        )
+
+        if code_result["success"]:
+            print(f"\n===== GENERATED {code_result['language'].upper()} CODE =====\n")
+            print(code_result["code"])
+            print("✅ Code generation complete.\n")
+        else:
+            print(f"⚠️ Failed to generate real code: {code_result.get('error', 'Unknown error')}")
+
+
+def generate_svg_diagram(plantuml_code, meeting_title="diagram"):
+    """
+    Generate SVG diagram from PlantUML code using the SVGConverter.
+    """
+    print(f"\n📊 Generating SVG diagram for: {meeting_title}")
+    
+    # Initialize SVG converter
+    svg_converter = SVGConverter()
+    
+    # Convert PlantUML to SVG
+    svg_result = svg_converter.convert_to_svg(plantuml_code)
+    
+    if svg_result["success"]:
+        print(f"✅ SVG generated successfully!")
+        print(f"📁 Output file: {svg_result['output_file']}")
+        print(f"📏 SVG content length: {len(svg_result['svg_content'])} characters")
+        
+        # Show a preview of the SVG content
+        preview_length = min(200, len(svg_result['svg_content']))
+        print(f"🔍 SVG Preview (first {preview_length} characters):")
+        print(svg_result['svg_content'][:preview_length])
+        if len(svg_result['svg_content']) > preview_length:
+            print("...")
+    else:
+        print(f"❌ SVG generation failed!")
+        print("Errors encountered:")
+        for error in svg_result['errors']:
+            print(f"  - {error}")
+    
+    return svg_result
+
 
 def format_enhanced_output(meeting, result):
     """Format the enhanced result output with detailed metadata"""
@@ -39,6 +103,12 @@ def test_diagram_type(generator, diagram_type):
     for meeting in meetings:
         result = generator.generate_from_meeting(meeting)
         print(format_enhanced_output(meeting, result))
+        
+        # Generate SVG diagram from the PlantUML code
+        if result['success'] and result['plantuml_code']:
+            generate_svg_diagram(result['plantuml_code'], meeting['title'])
+        
+        maybe_generate_real_code(generator, meeting, result)
 
 def main():
     """Simplified test runner with two core options"""
@@ -64,6 +134,12 @@ def main():
             print(f"\n🔸 Processing: {meeting['title']}")
             result = generator.generate_from_meeting(meeting)
             print(format_enhanced_output(meeting, result))
+            
+            # Generate SVG diagram from the PlantUML code
+            if result['success'] and result['plantuml_code']:
+                generate_svg_diagram(result['plantuml_code'], meeting['title'])
+            
+            maybe_generate_real_code(generator, meeting, result)
         else:
             print(f"❌ Meeting '{meeting_id}' not found!")
     

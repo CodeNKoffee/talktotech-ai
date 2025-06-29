@@ -60,71 +60,51 @@ REQUIREMENTS:
 Generate ONLY the PlantUML code. No explanations.
 """,
 
-    "UML Class Diagram": """
-You are a PlantUML expert. Create a syntactically PERFECT class diagram.
+  "UML Class Diagram": """
+You are a PlantUML expert. Generate a syntactically correct UML Class Diagram.
 
-INPUT DATA:
+INPUT:
 - Transcript: "{transcript}"
 - Summary: "{summary}"
 - Keywords: {keywords}
 
-CRITICAL SYNTAX RULES - FOLLOW EXACTLY:
-1. Start with @startuml, end with @enduml
-2. Add these styling lines after @startuml:
-   skinparam monochrome true
-   skinparam shadowing false
+PLANTUML RULES:
+1. Start with @startuml and end with @enduml
+2. Add after @startuml:
+   skinparam monochrome true  
+   skinparam shadowing false  
    skinparam style strictuml
 
-3. Class syntax: class ClassName {{
-   -privateAttribute: Type
-   +publicMethod(): ReturnType
+3. Use this format for class definitions:
+   class ClassName {{
+     -attribute: Type
+     +method(): ReturnType
    }}
-4. Inheritance: ChildClass --|> ParentClass
-5. Association: ClassA --> ClassB
-6. Composition: ClassA --* ClassB
-7. Multiplicity: ClassA "1" --> "*" ClassB
 
-EXAMPLE STRUCTURE:
-@startuml
-skinparam monochrome true
-skinparam shadowing false
-skinparam style strictuml
+4. Use only these relationships:
+   - Inheritance:     Child <|-- Parent
+   - Interface Impl:  Class <|.. Interface
+   - Composition:     Whole *-- Part
+   - Aggregation:     Whole o-- Part
+   - Dependency:      Class --> Other
+   - Cardinality:     Class1 "1" *-- "many" Class2 : label
+   → Always wrap cardinality numbers in double quotes: "1", "many"
+   → Always write the name of the relationship at the end and after a colon
+   example: ClassA "1" *-- "many" ClassB : contains
+   FOLLOW THIS EXACT SYNTAX
 
-class BaseEntity {{
-    -id: String
-    -createdAt: DateTime
-    +getId(): String
-}}
-
-class User {{
-    -name: String
-    -email: String
-    +getName(): String
-    +setName(name: String): void
-}}
-
-class Role {{
-    -roleName: String
-    +getRole(): String
-}}
-
-User --|> BaseEntity
-User "1" --> "*" Role
-
-note right of User : Domain entity
-@enduml
+5. STRUCTURE:
+   - First: All class and interface definitions
+   - Then: All relationships (after all classes)
 
 REQUIREMENTS:
-- Identify 3-5 key classes from the transcript
-- Include 2-3 attributes per class with proper visibility (-, +, #)
-- Include 1-2 methods per class
-- Show relationships between classes
-- Use proper PlantUML relationship syntax
-- Add one note referencing keywords
-- Ensure proper bracket matching {{ }}
-
-Generate ONLY the PlantUML code. No explanations.
-""",
+- Use correct visibility: + public, - private, # protected
+- Add one note related to the keywords, example:
+  note right of ClassName : note body
+- Do not include explanations
+- Output only valid PlantUML syntax
+"""
+,
 
     "Flowchart": """
 You are a PlantUML expert. Create a syntactically PERFECT activity diagram (flowchart).
@@ -291,6 +271,122 @@ REQUIREMENTS:
 - Add one note with keywords reference
 
 Generate ONLY the PlantUML code. No explanations.
+""",
+
+    "ER Diagram": """
+You are a PlantUML expert generating an **Entity Relationship Diagram** using **Chen's Notation**.
+
+⚠️ This is NOT a UML class diagram. DO NOT use UML-specific syntax.
+
+INPUT:
+- Transcript: "{transcript}"
+- Summary: "{summary}"
+- Keywords: {keywords}
+
+==========================
+🚫 DO NOT USE THE FOLLOWING:
+==========================
+- @startuml / @enduml
+- skinparam lines
+- class keyword or class diagrams
+- Visibility symbols like +, -, #
+- Inheritance arrows like <|--, --|>
+- Methods (anything with parentheses)
+- Attribute relationships like:
+    ❌ firstName : STRING -1- lastName -N- STRING
+
+==========================
+✅ REQUIRED STRUCTURE:
+==========================
+
+1️⃣ START & END:
+- Begin with:       @startchen
+- End with:         @endchen
+
+2️⃣ ENTITY DEFINITION:
+- Use: entity ENTITY_NAME {{
+         attribute : TYPE
+       }}
+
+- For primary keys, use:
+      AttributeName : TYPE <<key>>
+
+- For composite attributes:
+      CompositeName {{
+        SubAttr1 : TYPE
+        SubAttr2 : TYPE
+      }}
+- Attributes have a type only and don't have cardiinality or relationships.
+
+✅ Example:
+entity PERSON {{
+  PersonID : INTEGER <<key>>
+  Name {{
+    FirstName : STRING
+    LastName : STRING
+  }}
+  Email : STRING
+}}
+
+3️⃣ RELATIONSHIP BLOCK:
+- Use: relationship REL_NAME {{}}
+
+4️⃣ CONNECTIONS (written at the END only):
+- Use these valid cardinalities:
+    ENTITY1 -1- REL -1- ENTITY2        (One-to-One)
+    ENTITY1 -1- REL -N- ENTITY2        (One-to-Many)
+    ENTITY1 -N- REL -N- ENTITY2        (Many-to-Many)
+
+✅ Connection example:
+CUSTOMER -1- PLACES
+PLACES -N- ORDER
+
+==========================
+📌 STRUCTURE ENFORCEMENT:
+==========================
+
+🔸 FIRST:
+- Declare ALL entity and relationship blocks completely
+
+🔸 THEN:
+- Write ALL connections after the declarations
+
+❌ DO NOT mix entity definitions with connections
+❌ DO NOT interleave attributes with arrows
+❌ DO NOT link between attributes (e.g., name -1- surname)
+
+==========================
+📌 FINAL EXAMPLE OUTPUT:
+==========================
+
+@startchen
+
+entity CUSTOMER {{
+  CustomerID : INTEGER <<key>>
+  Name {{
+    FirstName : STRING
+    LastName : STRING
+  }}
+  Email : STRING
+}}
+
+entity ORDER {{
+  OrderID : INTEGER <<key>>
+  OrderDate : DATE
+  Amount : DECIMAL
+}}
+
+relationship PLACES {{}}
+
+CUSTOMER -1- PLACES
+PLACES -N- ORDER
+
+@endchen
+
+==========================
+🔚 OUTPUT REQUIREMENT:
+==========================
+Generate ONLY valid Chen's notation code — no explanations, no UML syntax, and no extra text.
 """
 }
 
@@ -319,7 +415,16 @@ DIAGRAM_VALIDATION_PATTERNS = {
         "forbidden_patterns": [
             r"participant\s+",
             r"actor\s+",
-            r"start\s*$"
+            r"start\s*$",
+            r"--\|>",  # Old inheritance syntax
+            r"--\*",   # Old composition syntax
+        ],
+        "required_relationships": [
+            r"<\|--",  # Extension/inheritance
+            r"<\|\.\.?", # Implementation
+            r"\*--",   # Composition
+            r"o--",    # Aggregation
+            r"-->"     # Dependency/association
         ]
     },
     "Flowchart": { 
@@ -360,6 +465,28 @@ DIAGRAM_VALIDATION_PATTERNS = {
             r"participant\s+",
             r"start\s*$"
         ]
+    },
+    "ER Diagram": {
+        "required_patterns": [
+            r"entity\s+\w+\s*\{",
+            r"@startchen",
+            r"@endchen"
+        ],
+        "forbidden_patterns": [
+            r"@startuml",
+            r"@enduml", 
+            r"skinparam",
+            r"class\s+\w+",
+            r"participant\s+",
+            r"actor\s+",
+            r"[+-#]\w+\s*:",
+            r"<\|--",  # UML inheritance syntax
+            r"--\|>",  # Old UML inheritance syntax
+            r"\w+\s*\(\s*\)"  # Method definitions
+        ],
+        "required_composite_format": [
+            r"\w+\s*\{\s*\n\s*\w+\s*:\s*\w+\s*\n"  # Multi-line composite attributes
+        ]
     }
 }
 
@@ -390,4 +517,81 @@ def get_enhanced_prompt(diagram_type: str, transcript: str, summary: str = "", k
         transcript=transcript[:2000],
         summary=summary[:500],  # Limit summary length to avoid excessive input
         keywords=keywords_str   # Use formatted keywords string
+    )
+
+# Revision-specific prompt template
+REVISION_PROMPT_TEMPLATE = """
+You are a PlantUML expert reviewing and improving your own generated code.
+
+ORIGINAL CONTEXT:
+- Diagram Type: {diagram_type}
+- Transcript: {transcript}
+- Summary: {summary}
+- Keywords: {keywords}
+
+YOUR PREVIOUSLY GENERATED CODE:
+{initial_code}
+
+VALIDATION ISSUES FOUND:
+{errors}
+
+REVISION INSTRUCTIONS:
+1. CAREFULLY review your generated PlantUML code above
+2. Check for syntax errors, missing elements, and improvement opportunities
+3. Ensure the diagram accurately represents the context from the transcript
+4. Verify all PlantUML syntax is correct and follows best practices
+5. Add missing relationships, entities, or workflow steps if needed
+6. Improve clarity and completeness while maintaining correctness
+7. Ensure proper styling is included
+
+SPECIFIC REQUIREMENTS FOR {diagram_type}:
+- Must start with correct @start tag and end with correct @end tag
+- Include proper styling (skinparam statements for UML diagrams)
+- Use correct syntax for the specific diagram type
+- Ensure all relationships and connections are properly defined
+- Add meaningful labels and descriptions
+- Include relevant details from the keywords: {keywords}
+
+CRITICAL RULES:
+- Generate ONLY the improved PlantUML code
+- No explanations or comments outside the code
+- Maintain the same diagram type: {diagram_type}
+- Fix any syntax errors identified above
+- Ensure the output will render without errors
+
+IMPROVED CODE:
+"""
+
+def get_revision_prompt(initial_code: str, diagram_type: str, transcript: str, 
+                       summary: str = "", keywords: list = None, errors: list = None) -> str:
+    """
+    Get revision prompt for AI to improve its own PlantUML code.
+    
+    Args:
+        initial_code: The initially generated PlantUML code
+        diagram_type: Type of UML diagram
+        transcript: The original transcript text
+        summary: Summarized version of transcript
+        keywords: List of relevant keywords
+        errors: List of validation errors found
+    
+    Returns:
+        Formatted revision prompt string ready for AI model
+    """
+    if keywords is None:
+        keywords = []
+    if errors is None:
+        errors = []
+    
+    # Format components
+    keywords_str = ", ".join(keywords) if keywords else "None provided"
+    errors_str = "\n".join(f"- {error}" for error in errors) if errors else "No specific errors detected"
+    
+    return REVISION_PROMPT_TEMPLATE.format(
+        initial_code=initial_code,
+        diagram_type=diagram_type,
+        transcript=transcript[:800],  # Limit transcript length
+        summary=summary[:400],        # Limit summary length
+        keywords=keywords_str,
+        errors=errors_str
     )
