@@ -362,7 +362,6 @@ body {
 }
 
 .summary-content {
-  padding: 24px 28px 28px;
   overflow-y: auto;
   flex: 1;
   scrollbar-width: thin;
@@ -488,13 +487,14 @@ body {
 .summary-content {
   margin-top: 8px;
   text-align: left;
+  padding:15px;
 }
 
 .summary-bullet {
   color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   line-height: 1.6;
-  margin: 6px 0;
+  margin: 6px 0px;
   padding: 3px 0;
   text-align: left;
   padding-left: 8px;
