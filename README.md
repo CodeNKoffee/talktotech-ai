@@ -60,6 +60,7 @@ TalkToTech doesn't just save time — it preserves the brilliance that happens i
 
 Our modular AI pipeline reflects the technical workflow:
 
+- **`meeting_processor`** - Handles audio transcription and transcript summarization using AI models
 - **`diagram_selector`** - Takes raw transcript and uses Granite Instruct to output JSON with chosen diagram type and summary
 - **`diagram_to_code`** - Uses Granite Code to generate PlantUML syntax from the JSON
 - **`meeting_to_diagram`** - Renders PlantUML into SVG images

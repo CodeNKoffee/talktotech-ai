@@ -14,7 +14,8 @@ load_dotenv(dotenv_path=env_path)
 
 replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
-# Import the modularized functions
+# Import the modularized functions and add paths for meeting_to_text components
+sys.path.append(os.path.join(os.path.dirname(__file__), 'meeting_to_text'))
 from summarizer import summarize_transcript
 from transcriber import transcribe_audio
 from diagram_selector.diagram_classifier import analyze_meeting
@@ -43,7 +44,6 @@ def upload():
 
     # 3. Analyze for Diagram Type and Title (from updated module)
     meeting_data = analyze_meeting(transcript_text)
-    meeting = meeting_data
     print(f"✅ Meeting analyzed - Suggested diagrams: {', '.join(meeting_data.get('output_diagram', []))}")
 
     # 4. Generate PlantUML Code for All Suggested Diagrams
