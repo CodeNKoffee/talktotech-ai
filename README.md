@@ -214,6 +214,22 @@ SOFTWARE.
 
 Here's a glimpse of the TalkToTech user interface in action:
 
-| Audio Recording & Session Summary | Diagram & Code Generation |
-|:---------------------------------:|:------------------------:|
-| ![Recording and Summary UI](assets/TalkToTech-IMG1.jpg) | ![Diagram and Code UI](assets/TalkToTech-IMG2.jpg) |
+| Audio Recording | Session Summary |
+|:--------------:|:-------------------:|
+| ![Home Interface 1](assets/TalkToTech-Home1.png) | ![Home Interface 2](assets/TalkToTech-Home2.png) |
+
+| Class Diagram Example | Class Diagram Example |
+|:------------------------:|:------------------------:|
+| ![Class Diagram 1](assets/TalkToTech-ClassDiagram1.png) | ![Class Diagram 2](assets/TalkToTech-ClassDiagram2.png) |
+
+| Use Case Example | Use Case Example |
+|:------------------:|:------------------:|
+| ![Use Case 1](assets/TalkToTech-Usecase1.png) | ![Use Case 2](assets/TalkToTech-Usecase2.png) |
+
+| ERD Example | ERD Example | ERD Example |
+|:-------------:|:-------------:|:-------------:|
+| ![ERD 1](assets/TalkToTech-ERD1.png) | ![ERD 2](assets/TalkToTech-ERD2.png) | ![ERD 3](assets/TalkToTech-ERD3.png) |
+
+| PlantUML Code Editing |
+|:-------------------------:|
+| ![Edit Interface](assets/TalkToTech-Edit.png) |
