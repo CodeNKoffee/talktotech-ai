@@ -9,8 +9,6 @@
 
 📹 **Video Demo:** [Watch our 3-minute demonstration](https://drive.google.com/file/d/1j11mzUInQ6gtEBuJ_EXZC_NRCrz9pROh/view?usp=sharing)  
 
-📂 **Repository:** [GitHub Repository](https://github.com/CodeNKoffee/talktotech-ai/tree/master)
-
 💡 **Want to test the full functionality?** Download the repo locally, sign up at [Replicate](https://replicate.com), get your own API token, and replace it in the configuration files!
 
 This repository showcases AI-powered automation solutions developed during the **IBM AI & Automation Unpacked Hackathon** at **IBM TechXchange 2025** (June 26-29, 2025). Our project focuses on leveraging **IBM Granite models** to create innovative tools that transform spoken technical conversations into structured, production-ready system diagrams.
@@ -131,7 +129,6 @@ All team members are students at the **German University in Cairo** in the **Med
 2. **Backend Setup**
 
    ```bash
-   cd components
    pip install -r requirements.txt
    ```
 

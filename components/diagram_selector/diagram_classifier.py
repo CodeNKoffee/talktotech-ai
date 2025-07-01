@@ -1,8 +1,12 @@
 import json
 import replicate
 import os
+from dotenv import load_dotenv
+import pathlib
 
-# Per user instruction, use the Replicate client with a hardcoded token.
+# Load environment variables from .env file using absolute path
+env_path = pathlib.Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
 # Simple in-memory counter that resets with the Python process (i.e. the

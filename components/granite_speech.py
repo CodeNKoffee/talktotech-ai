@@ -5,6 +5,14 @@ import os
 import sys
 import json
 from plantuml import PlantUML
+from dotenv import load_dotenv
+import pathlib
+
+# Load environment variables from .env file using absolute path
+env_path = pathlib.Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
+replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
 # Import the modularized functions
 from summarizer import summarize_transcript
@@ -16,11 +24,6 @@ app = Flask(__name__)
 # Development wildcard CORS - allows all origins (easiest for dev)
 CORS(app, origins="*", allow_headers="*", methods="*")
 
-
-# Replicate client setup
-
-# Hatem's token
-replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
 @app.route("/")
 def index():

@@ -1,6 +1,8 @@
 import re
-import sys
-import time
+import os
+import replicate
+import pathlib
+from dotenv import load_dotenv
 
 class GraniteCodeGenerator:
     """
@@ -11,12 +13,10 @@ class GraniteCodeGenerator:
     
     def __init__(self):
         """Initialize the Granite Code LLM for PlantUML generation"""
-        from dotenv import load_dotenv
-        import os
-        import replicate
-        
-        load_dotenv()
-        # Hatem's token
+    
+        # Load environment variables from .env file using absolute path
+        env_path = pathlib.Path(__file__).parent.parent / '.env'
+        load_dotenv(dotenv_path=env_path)
         self.replicate_token = os.getenv("REPLICATE_API_TOKEN")
         
         if not self.replicate_token:

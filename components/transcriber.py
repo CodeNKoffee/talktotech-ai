@@ -1,8 +1,11 @@
 import replicate
 import os
+from dotenv import load_dotenv
+import pathlib
 
-# Using the new token provided by the user for all Replicate calls.
-# Hatem's token
+# Load environment variables from .env file using absolute path
+env_path = pathlib.Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
 
 def transcribe_audio(path):

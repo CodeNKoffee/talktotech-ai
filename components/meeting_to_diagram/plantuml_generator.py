@@ -10,12 +10,16 @@ from plantuml_utils import (
     create_plantuml_processor
 )
 from dotenv import load_dotenv
+import pathlib
 
 class GranitePlantUMLGenerator:
     def __init__(self):
         """Initialize the Granite Code LLM for PlantUML generation"""
-        load_dotenv()
-        # Hatem's token
+        
+        # Load environment variables from .env file using absolute path
+        env_path = pathlib.Path(__file__).parent.parent / '.env'
+        load_dotenv(dotenv_path=env_path)
+
         REPLICATE_TOKEN = os.getenv("REPLICATE_API_TOKEN")
         if not REPLICATE_TOKEN:
             raise ValueError("REPLICATE_API_TOKEN environment variable is not set")
