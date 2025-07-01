@@ -58,7 +58,6 @@ models/
 # Generated diagrams
 output/
 diagrams/
-*.png
 *.svg
 *.pdf
 
