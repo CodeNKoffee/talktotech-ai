@@ -2,6 +2,10 @@ import React from 'react';
 import './DiagramTabs.css';
 
 const DiagramTabs = ({ diagrams, activeTab, onTabChange }) => {
+  if (!diagrams || diagrams.length === 0) {
+    return null;
+  }
+
   return (
     <div className="diagram-tabs-container">
       <div className="diagram-tabs">
@@ -11,7 +15,7 @@ const DiagramTabs = ({ diagrams, activeTab, onTabChange }) => {
             className={`diagram-tab ${activeTab === index ? 'active' : ''}`}
             onClick={() => onTabChange(index)}
           >
-            <span className="tab-label">{diagram.type}</span>
+            <span className="tab-label">{diagram.diagram_type}</span>
           </button>
         ))}
       </div>

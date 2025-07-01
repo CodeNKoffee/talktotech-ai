@@ -318,7 +318,7 @@ body {
   position: fixed;
   top: 90px;
   right: 30px;
-  width: 350px;
+  width: 500px;
   max-height: calc(100vh - 125px);
   display: flex;
   flex-direction: column;

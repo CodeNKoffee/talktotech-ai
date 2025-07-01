@@ -12,145 +12,35 @@ const PlantUMLDisplay = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { meeting, diagrams } = location.state || {};
+  
+  // Safety check
+  if (!meeting || !diagrams || diagrams.length === 0) {
+    return (
+      <div className="plantuml-display">
+        <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>
+          <h2>No data available</h2>
+          <button onClick={() => navigate('/')} style={{ padding: '10px 20px', marginTop: '20px' }}>
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const [showSummary, setShowSummary] = useState(false);
   const [showCodePopup, setShowCodePopup] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [isRegeneratingSvg, setIsRegeneratingSvg] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isUpdatingCode, setIsUpdatingCode] = useState(false);
+  const [diagramsState, setDiagramsState] = useState(diagrams || []);
 
-  // Dummy diagram data with different types
-  const diagramTypes = [
-    {
-      type: "Class Diagram",
-      icon: "📊",
-      plantUMLCode: `@startuml
-class UserManager {
-  -users: List<User>
-  -dbConnection: DatabaseConnection
-  +addUser(user: User): void
-  +removeUser(userId: String): void
-  +findUserById(userId: String): User
-  -isValidUser(user: User): boolean
-}
-
-class User {
-  -id: String
-  -name: String
-  -email: String
-  +getId(): String
-  +getName(): String
-  +getEmail(): String
-}
-
-UserManager --> User : manages
-@enduml`,
-      javaCode: `public class UserManager {
-    private List<User> users;
-    private DatabaseConnection dbConnection;
-    
-    public UserManager() {
-        this.users = new ArrayList<>();
-        this.dbConnection = DatabaseFactory.createConnection();
-    }
-    
-    public void addUser(User user) {
-        if (user != null && isValidUser(user)) {
-            users.add(user);
-            dbConnection.save(user);
-        }
-    }
-    
-    private boolean isValidUser(User user) {
-        return user.getName() != null && 
-               user.getEmail() != null;
-    }
-}`
-    },
-    {
-      type: "Sequence Diagram",
-      icon: "⚡",
-      plantUMLCode: `@startuml
-actor User
-participant "Web App" as App
-participant "Auth Service" as Auth
-participant "Database" as DB
-
-User -> App: Login Request
-App -> Auth: Validate Credentials
-Auth -> DB: Check User Data
-DB --> Auth: User Info
-Auth --> App: Authentication Token
-App --> User: Login Success
-@enduml`,
-      javaCode: `public class AuthenticationService {
-    private UserRepository userRepo;
-    private TokenService tokenService;
-    
-    public AuthToken login(String email, String password) {
-        User user = userRepo.findByEmail(email);
-        
-        if (user != null && validatePassword(password, user.getPassword())) {
-            return tokenService.generateToken(user);
-        }
-        
-        throw new AuthenticationException("Invalid credentials");
-    }
-    
-    private boolean validatePassword(String input, String stored) {
-        return BCrypt.checkpw(input, stored);
-    }
-}`
-    },
-    {
-      type: "Use Case Diagram",
-      icon: "👤",
-      plantUMLCode: `@startuml
-left to right direction
-actor "Customer" as customer
-actor "Admin" as admin
-
-rectangle "E-commerce System" {
-  usecase "Browse Products" as UC1
-  usecase "Add to Cart" as UC2
-  usecase "Checkout" as UC3
-  usecase "Manage Inventory" as UC4
-  usecase "View Reports" as UC5
-}
-
-customer --> UC1
-customer --> UC2
-customer --> UC3
-admin --> UC4
-admin --> UC5
-@enduml`,
-      javaCode: `public class ECommerceController {
-    private ProductService productService;
-    private CartService cartService;
-    private OrderService orderService;
-    
-    @GetMapping("/products")
-    public List<Product> browseProducts() {
-        return productService.getAllProducts();
-    }
-    
-    @PostMapping("/cart/add")
-    public ResponseEntity<String> addToCart(@RequestBody CartItem item) {
-        cartService.addItem(item);
-        return ResponseEntity.ok("Item added to cart");
-    }
-    
-    @PostMapping("/checkout")
-    public Order checkout(@RequestBody CheckoutRequest request) {
-        return orderService.processOrder(request);
-    }
-}`
-    }
-  ];
-  
-  // Get data from navigation state, fallback to mock data if not available
+  // Get data from navigation state
   const summaryData = {
-    title: meeting.title,
-    summary: meeting.summary_text,
-    keywords: meeting.keywords,
-    outputDiagram: meeting.outputDiagram,
+    title: meeting?.title,
+    summary: meeting?.summary,
+    keywords: meeting?.keywords,
+    outputDiagram: meeting?.output_diagram,
   };
 
   // Format duration properly if it's a number (seconds)
@@ -185,34 +75,209 @@ admin --> UC5
     navigate('/');
   };
 
-  const handleTabChange = (tabIndex) => {
+  const handleTabChange = async (tabIndex) => {
+    console.log(`🔄 Switching to tab ${tabIndex}, diagram type: ${diagramsState[tabIndex]?.diagram_type}`);
     setActiveTab(tabIndex);
+    
+    // Check if the new diagram needs SVG regeneration
+    const newDiagram = diagramsState[tabIndex];
+    if (newDiagram && newDiagram.plantuml_code && !newDiagram.svg_file) {
+      setIsRegeneratingSvg(true);
+      console.log(`🖼️ Generating SVG for ${newDiagram.diagram_type}...`);
+      
+      try {
+        const response = await fetch("http://127.0.0.1:5000/regenerate-svg", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            plantuml_code: newDiagram.plantuml_code,
+            diagram_type: newDiagram.diagram_type
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Update the diagrams state with the new SVG file
+            setDiagramsState(prevDiagrams => 
+              prevDiagrams.map((diagram, index) => 
+                index === tabIndex 
+                  ? { ...diagram, svg_file: data.svg_file }
+                  : diagram
+              )
+            );
+            console.log(`✅ SVG generated successfully for ${newDiagram.diagram_type}`);
+          }
+        }
+      } catch (error) {
+        console.error(`Error generating SVG for ${newDiagram.diagram_type}:`, error);
+      } finally {
+        setIsRegeneratingSvg(false);
+      }
+    }
+  };
+
+  const handleRetryDiagram = async () => {
+    const currentDiagram = diagramsState[activeTab];
+    if (!currentDiagram || !meeting) return;
+
+    setIsRetrying(true);
+    console.log(`🔄 Fully regenerating diagram for ${currentDiagram.diagram_type} (tab ${activeTab})...`);
+    console.log('Meeting data:', meeting);
+    console.log('Current diagram data:', currentDiagram);
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/regenerate-diagram", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          meeting_data: meeting,
+          diagram_type: currentDiagram.diagram_type
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Update the current diagram with all new data
+          setDiagramsState(prevDiagrams => 
+            prevDiagrams.map((diagram, index) => 
+              index === activeTab 
+                ? { 
+                    ...diagram, 
+                    plantuml_code: data.plantuml_code,
+                    svg_file: data.svg_file,
+                    real_code: data.real_code,
+                    real_code_language: data.real_code_language
+                  }
+                : diagram
+            )
+          );
+          console.log(`✅ Diagram fully regenerated for ${currentDiagram.diagram_type}`);
+          console.log('New PlantUML code:', data.plantuml_code?.substring(0, 100) + '...');
+        }
+      }
+    } catch (error) {
+      console.error(`Error regenerating diagram for ${currentDiagram.diagram_type}:`, error);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  const handleCodeUpdate = async (newPlantUMLCode) => {
+    const currentDiagram = diagramsState[activeTab];
+    if (!currentDiagram) return;
+
+    setIsUpdatingCode(true);
+    console.log(`📝 Updating PlantUML code for ${currentDiagram.diagram_type}...`);
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/update-plantuml", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          plantuml_code: newPlantUMLCode,
+          diagram_type: currentDiagram.diagram_type
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Update only the PlantUML code and SVG for the current diagram
+          setDiagramsState(prevDiagrams => 
+            prevDiagrams.map((diagram, index) => 
+              index === activeTab 
+                ? { 
+                    ...diagram, 
+                    plantuml_code: data.plantuml_code,
+                    svg_file: data.svg_file
+                  }
+                : diagram
+            )
+          );
+          console.log(`✅ PlantUML code updated for ${currentDiagram.diagram_type}`);
+        } else {
+          console.error('Error updating PlantUML:', data.error);
+          alert(`Error: ${data.error}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Error updating PlantUML code for ${currentDiagram.diagram_type}:`, error);
+      alert('Network error while updating PlantUML code');
+    } finally {
+      setIsUpdatingCode(false);
+    }
   };
 
   // Get current diagram data
-  const currentDiagram = diagrams[activeTab];
+  const currentDiagram = diagramsState[activeTab];
 
   return (
     <div className="plantuml-display">
-      {/* Back Button */}
-      <button className="back-button" onClick={handleGoBack}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        Back
-      </button>
+      {/* Action Buttons Container */}
+      <div className="action-buttons-container">
+        {/* Back Button */}
+        <button className="back-button" onClick={handleGoBack}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </button>
 
-      {/* Summary Button */}
-      <SummaryButton 
-        onToggle={toggleSummary}
-        showSummary={showSummary}
-        summaryData={formattedSummaryData}
-      />
+        <div className="right-buttons">
+          {/* Summary Button */}
+          <SummaryButton 
+            onToggle={toggleSummary}
+            showSummary={showSummary}
+            summaryData={formattedSummaryData}
+          />
+
+          {/* Retry Button */}
+          <button 
+            className="retry-button" 
+            onClick={handleRetryDiagram}
+            disabled={isRetrying || isRegeneratingSvg}
+            title="Regenerate current diagram"
+          >
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+              className={isRetrying ? 'spinning' : ''}
+            >
+              <path 
+                d="M1 4V10H7M23 20V14H17" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+              <path 
+                d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14L18.36 18.36A9 9 0 0 1 3.51 15" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+            {isRetrying ? 'Regenerating...' : 'Retry'}
+          </button>
+        </div>
+      </div>
 
       <div className="plantuml-container">
         {/* Diagram Tabs */}
         <DiagramTabs 
-          diagrams={diagramTypes}
+          diagrams={diagramsState}
           activeTab={activeTab}
           onTabChange={handleTabChange}
         />
@@ -220,7 +285,12 @@ admin --> UC5
         <div className="panels-grid">
           {/* PDF/SVG Panel */}
           <div className="pdf-svg-section">
-            <PDFSVGPanel diagramType={currentDiagram.diagram_type} link={currentDiagram.svg_file} />
+            <PDFSVGPanel 
+              diagramType={currentDiagram?.diagram_type} 
+              link={currentDiagram?.svg_file}
+              isLoading={isRegeneratingSvg || isRetrying || isUpdatingCode}
+              isRetrying={isRetrying || isUpdatingCode}
+            />
           </div>
 
           {/* Generate Code Button */}
@@ -230,7 +300,12 @@ admin --> UC5
 
           {/* PlantUML Code Panel */}
           <div className="plantuml-code-section">
-            <PlantUMLCodePanel code={currentDiagram.plantuml_code} diagramType={currentDiagram.diagram_type} />
+            <PlantUMLCodePanel 
+              code={currentDiagram?.plantuml_code} 
+              diagramType={currentDiagram?.diagram_type}
+              onCodeUpdate={handleCodeUpdate}
+              isUpdating={isUpdatingCode}
+            />
           </div>
         </div>
       </div>
@@ -239,8 +314,8 @@ admin --> UC5
       <CodePopup 
         isOpen={showCodePopup} 
         onClose={handleCloseCodePopup}
-        language={currentDiagram.real_code_language}
-        code={currentDiagram.real_code}
+        language={currentDiagram?.real_code_language}
+        code={currentDiagram?.real_code}
       />
     </div>
   );

@@ -280,49 +280,53 @@ Generate ONLY the PlantUML code. No explanations.
     "ER Diagram": """
 You are a PlantUML expert generating an **Entity Relationship Diagram** using **Chen's Notation**.
 
-⚠️ This is NOT a UML class diagram. DO NOT use UML-specific syntax.
+⚠️ This is NOT a UML Class Diagram. DO NOT use UML-specific syntax.
 
 INPUT:
 - Transcript: "{transcript}"
 - Summary: "{summary}"
 - Keywords: {keywords}
 
-==========================
-🚫 DO NOT USE THE FOLLOWING:
-==========================
+===========================
+🚫 FORBIDDEN SYNTAX - NEVER USE:
+===========================
 - @startuml / @enduml
 - skinparam lines
-- class keyword or class diagrams
-- Visibility symbols like +, -, #
-- Inheritance arrows like <|--, --|>
-- Methods (anything with parentheses)
-- Attribute relationships like:
-    ❌ firstName : STRING -1- lastName -N- STRING
+- class keyword or class syntax
+- +, -, # visibility modifiers
+- Inheritance arrows (<|--, --|>)
+- Methods or parentheses ()
+- Arrow connections between attributes
+  ❌ WRONG: firstName : STRING -1- lastName : STRING
+- Abbreviations or aliases inside entity names
+  ❌ WRONG: entity USER "User" as U
+- Don't use the word "as" under any circumstances
 
-==========================
-✅ REQUIRED STRUCTURE:
-==========================
+===========================
+✅ MANDATORY STRUCTURE:
+===========================
 
-1️⃣ START & END:
-- Begin with:       @startchen
-- End with:         @endchen
+1️⃣ DIAGRAM START & END:
+- Start with:   @startchen
+- End with:     @endchen
 
-2️⃣ ENTITY DEFINITION:
-- Use: entity ENTITY_NAME {{
-         attribute : TYPE
-       }}
+2️⃣ ENTITY DEFINITIONS:
+- Format:
+  entity ENTITY_NAME {{
+    AttributeName : TYPE
+    CompositeAttribute {{
+      SubAttr1 : TYPE
+      SubAttr2 : TYPE
+    }}
+  }}
 
-- For primary keys, use:
-      AttributeName : TYPE <<key>>
+- Primary key:
+    AttributeName : TYPE <<key>>
 
-- For composite attributes:
-      CompositeName {{
-        SubAttr1 : TYPE
-        SubAttr2 : TYPE
-      }}
-- Attributes have a type only and don't have cardiinality or relationships.
+- Composite attributes:
+    MUST be defined on separate lines with indentation
 
-✅ Example:
+✅ EXAMPLE:
 entity PERSON {{
   PersonID : INTEGER <<key>>
   Name {{
@@ -332,36 +336,45 @@ entity PERSON {{
   Email : STRING
 }}
 
-3️⃣ RELATIONSHIP BLOCK:
-- Use: relationship REL_NAME {{}}
+3️⃣ RELATIONSHIP BLOCKS:
+- Format:
+  relationship REL_NAME {{}}
 
-4️⃣ CONNECTIONS (written at the END only):
-- Use these valid cardinalities:
-    ENTITY1 -1- REL -1- ENTITY2        (One-to-One)
-    ENTITY1 -1- REL -N- ENTITY2        (One-to-Many)
-    ENTITY1 -N- REL -N- ENTITY2        (Many-to-Many)
+4️⃣ CONNECTIONS (DEFINED AFTER ENTITIES & RELATIONSHIPS):
+- Must come **after** all entity and relationship definitions
+- Valid formats:
+    (One-to-One):
+    ENTITY1 -1- REL
+    Rel -1- ENTITY2   
+    (One-to-Many):
+    ENTITY1 -1- REL    
+    REL -N- ENTITY2  
+    (Many-to-Many):
+    ENTITY1 -N- REL 
+    REL -N- ENTITY2     
 
-✅ Connection example:
+    ** REL is the relationship block name defined above
+
+- DO NOT link attributes or subfields
+
+✅ EXAMPLE CONNECTIONS:
 CUSTOMER -1- PLACES
 PLACES -N- ORDER
 
-==========================
-📌 STRUCTURE ENFORCEMENT:
-==========================
+===========================
+📌 STRUCTURE ORDER RULES:
+===========================
+1. Declare all **entities** first
+2. Then declare all **relationships**
+3. Finally, define all **connections** at the end
 
-🔸 FIRST:
-- Declare ALL entity and relationship blocks completely
+❌ NEVER mix definitions and connections
+❌ NEVER place arrows inside entity blocks
+❌ NEVER connect attribute-to-attribute or type-to-type
 
-🔸 THEN:
-- Write ALL connections after the declarations
-
-❌ DO NOT mix entity definitions with connections
-❌ DO NOT interleave attributes with arrows
-❌ DO NOT link between attributes (e.g., name -1- surname)
-
-==========================
-📌 FINAL EXAMPLE OUTPUT:
-==========================
+===========================
+📌 FINAL OUTPUT FORMAT:
+===========================
 
 @startchen
 
@@ -387,10 +400,12 @@ PLACES -N- ORDER
 
 @endchen
 
-==========================
-🔚 OUTPUT REQUIREMENT:
-==========================
-Generate ONLY valid Chen's notation code — no explanations, no UML syntax, and no extra text.
+===========================
+🔚 OUTPUT INSTRUCTIONS:
+===========================
+✅ Generate ONLY valid PlantUML code using Chen’s Notation  
+❌ No explanation, no extra text  
+✅ Output must be inside a single PlantUML code block
 """
 }
 

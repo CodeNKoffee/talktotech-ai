@@ -102,12 +102,18 @@ class GranitePlantUMLGenerator:
         """
         # Handle the case where output_diagram is a list (new format) or string (legacy)
         diagram_type = meeting["output_diagram"]
+        print(f"🔍 PlantUML Generator received diagram_type: {diagram_type} (type: {type(diagram_type)})")
+        
         if isinstance(diagram_type, list) and diagram_type:
             # Use the first diagram type if multiple are suggested
             diagram_type = diagram_type[0]
+            print(f"🔍 Converted from list to: {diagram_type}")
         elif isinstance(diagram_type, list) and not diagram_type:
             # Default to a common diagram type if list is empty
             diagram_type = "Sequence Diagram"
+            print(f"🔍 Used default diagram type: {diagram_type}")
+        
+        print(f"🎯 Final diagram_type for generation: {diagram_type}")
         
         result = self.generate_plantuml(
             transcript=meeting["transcript"],
