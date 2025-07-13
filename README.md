@@ -161,6 +161,24 @@ TalkToTech addresses the universal challenge of **capturing and preserving techn
 
 ---
 
+## 🎨 Branding & Team Artistry
+
+At TalkToTech, we believe that great technology deserves a great look! Our team didn’t just code—we also dedicated time to crafting a visual identity that speaks to our mission. Whether it was late-night debates over logo curves or the eternal question of "banner or banner-wide?", we made sure our branding was as sharp as our code. (We promise, no designers were harmed in the making of these assets.)
+
+<p align="center">
+  <img src="assets/TalkToTech-LOGO.jpeg" alt="TalkToTech Logo" width="200" />
+</p>
+
+<p align="center">
+  <img src="assets/TalkToTech-BANNER.jpeg" alt="TalkToTech Banner" width="400" />
+</p>
+
+<p align="center">
+  <img src="assets/TalkToTech-BANNER-wide.jpeg" alt="TalkToTech Banner Wide" width="600" />
+</p>
+
+---
+
 ## ⚠️ Data Compliance Notice
 
 In adherence to the hackathon guidelines, all data used in this project complies with responsible AI practices. We have ensured:
