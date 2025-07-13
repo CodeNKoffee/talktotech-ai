@@ -90,11 +90,11 @@ TalkToTech uses a streamlined pipeline powered entirely by IBM's **granite-3.3-8
 
 All team members are students at the **German University in Cairo** in the **Media Engineering and Technology Faculty**, **Computer Science and Engineering major**:
 
-* **Salma Tarek Soliman** - Computer Science & Engineering Student
-* **Ahmed Dabour** - Computer Science & Engineering Student
-* **Hatem Soliman** - Computer Science & Engineering Student
-* **Yasmeen Tarek** - Computer Science & Engineering Student
+* [**Ahmed Dabour**](https://www.linkedin.com/in/ahmed-dabour-64186a316/) - Computer Science & Engineering Student
+* [**Hatem Soliman**](https://www.linkedin.com/in/h4temsoliman/) - Computer Science & Engineering Student
 * **Layla Khaled** - Computer Science & Engineering Student
+* [**Salma Tarek Soliman**](https://www.linkedin.com/in/sal-tarek/) - Computer Science & Engineering Student
+* [**Yasmeen Tarek**](https://www.linkedin.com/in/yasmeen-tarek/) - Computer Science & Engineering Student
 
 ---
 
@@ -197,6 +197,12 @@ In adherence to the hackathon guidelines, all data used in this project complies
 * [IBM watsonx.ai Platform](https://dataplatform.cloud.ibm.com/wx/home?context=wx)
 * [PlantUML Documentation](https://plantuml.com/)
 * [Incredibly Fast Whisper](https://github.com/SYSTRAN/faster-whisper)
+
+---
+
+## 🗣️ Honourable Mention: OpenAI Whisper for Speech-to-Text
+
+While our AI pipeline is powered by IBM Granite models for understanding, summarization, and code/diagram generation, we tip our hats to OpenAI's Whisper model for handling the speech-to-text transcription. Thanks to Whisper (via Replicate).
 
 ---
 
